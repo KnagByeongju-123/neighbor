@@ -295,7 +295,7 @@ body.auth .auth-only{display:inline-block}
   <!-- 모임 -->
   <section class="page" id="pg-event">
     <div class="page-head"><h2>모임</h2>
-      <button class="btn btn-primary btn-sm admin-only" onclick="openEvent()">＋ 모임 등록</button></div>
+      <button class="btn btn-primary btn-sm auth-only" onclick="openEvent()">＋ 모임 등록</button></div>
     <div class="card" id="eventList"></div>
   </section>
 
@@ -562,6 +562,9 @@ function renderDues(){
   }).join('');
   $('duesTbl').innerHTML = h;
 }
+function canEditEvent(e){
+  return isAdmin() || (AUTH && AUTH['이름'] === e['작성자']);
+}
 function renderEvents(){
   const list = DATA.events;
   $('eventList').innerHTML = list.length ? list.map(e=>{
@@ -569,33 +572,37 @@ function renderEvents(){
     const joined = AUTH && players.includes(AUTH['이름']);
     return '<div class="item"><div style="flex:1"><div class="t">'+esc(e['장소']||'미정')+'</div>'+
     '<div class="s">'+esc(e['날짜'])+(e['시간']?' '+esc(e['시간']):'')+(e['메모']?' · '+esc(e['메모']):'')+'</div>'+
-    (players.length?'<div class="s">참석('+players.length+'): '+esc(players.join(', '))+'</div>':'')+'</div>'+
+    (players.length?'<div class="s">참석('+players.length+'): '+esc(players.join(', '))+'</div>':'')+
+    (e['작성자']?'<div class="s" style="opacity:.75">등록: '+esc(e['작성자'])+'</div>':'')+'</div>'+
     '<div style="text-align:right;flex-shrink:0">'+
     (AUTH?'<button class="btn '+(joined?'btn-ghost':'btn-primary')+' btn-sm" onclick="applyEvent('+e['ID']+')">'+(joined?'참석 취소':'참석')+'</button>':'')+
-    (isAdmin()?'<div style="margin-top:4px"><button class="btn btn-ghost btn-sm" onclick="openEvent('+e['ID']+')">수정</button> '+
+    (canEditEvent(e)?'<div style="margin-top:4px"><button class="btn btn-ghost btn-sm" onclick="openEvent('+e['ID']+')">수정</button> '+
     '<button class="btn btn-danger btn-sm" onclick="delEvent('+e['ID']+')">삭제</button></div>':'')+'</div></div>';
   }).join('') : '<div class="empty">등록된 모임이 없습니다</div>';
 }
 function renderPosts(){
   const list = DATA.posts;
   $('postList').innerHTML = list.length ? list.map(p=>{
-    const mine = AUTH && (AUTH['이름']===p['작성자'] || isAdmin());
+    const canEdit = AUTH && (AUTH['이름']===p['작성자'] || isAdmin());
+    const canDel = canEdit;
+    const btns = (canEdit||canDel) ? '<div style="flex-shrink:0">'+
+      (canEdit?'<button class="btn btn-ghost btn-sm" onclick="openPost('+p['ID']+')">수정</button> ':'')+
+      (canDel?'<button class="btn btn-danger btn-sm" onclick="delPost('+p['ID']+')">삭제</button>':'')+'</div>' : '';
     return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
     '<div><div style="font-weight:800">'+(p['종류']==='공지'?'<span class="badge">공지</span>':'')+esc(p['제목'])+'</div>'+
     '<div class="s" style="font-size:12px;color:var(--ink-soft);margin-top:2px">'+esc(p['작성자'])+' · '+esc(p['날짜'])+'</div></div>'+
-    (mine?'<div style="flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openPost('+p['ID']+')">수정</button> '+
-    '<button class="btn btn-danger btn-sm" onclick="delPost('+p['ID']+')">삭제</button></div>':'')+'</div>'+
+    btns+'</div>'+
     '<div style="margin-top:8px;font-size:14px;white-space:pre-wrap">'+esc(p['내용'])+'</div>'+
-    postPhotosHtml(p, mine)+'</div>';
+    postPhotosHtml(p, canDel)+'</div>';
   }).join('') : '<div class="card"><div class="empty">아직 글이 없습니다</div></div>';
   loadVisiblePhotos();
 }
-function postPhotosHtml(p, mine){
+function postPhotosHtml(p, canDel){
   const ids = String(p['fileIds']||'').split(',').map(x=>x.trim()).filter(Boolean);
   if(!ids.length) return '';
   return '<div class="post-photos">'+ids.map(fid=>
     '<div class="ph"><img data-fid="'+fid+'" onclick="viewPhoto(\''+fid+'\')" alt="">'+
-    (mine?'<button class="rm" onclick="removePhoto('+p['ID']+',\''+fid+'\')">✕</button>':'')+'</div>'
+    (canDel?'<button class="rm" onclick="removePhoto('+p['ID']+',\''+fid+'\')">✕</button>':'')+'</div>'
   ).join('')+'</div>';
 }
 function loadVisiblePhotos(){
