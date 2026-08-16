@@ -179,9 +179,15 @@ body.auth .auth-only{display:inline-block}
 .post-photos img{width:100%;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;background:#EFEEDD}
 .post-photos .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;
   background:rgba(30,28,24,.65);color:#fff;font-size:11px;line-height:20px;padding:0}
-#photoView{display:none;position:fixed;inset:0;background:rgba(20,18,15,.92);z-index:300;align-items:center;justify-content:center}
+#photoView{display:none;position:fixed;inset:0;background:rgba(20,18,15,.94);z-index:300;
+  align-items:center;justify-content:center;padding:64px 10px 24px}
 #photoView.on{display:flex}
-#photoView img{max-width:96vw;max-height:92vh;border-radius:8px}
+#photoView img{max-width:96vw;max-height:100%;border-radius:8px;object-fit:contain}
+#photoClose{position:fixed;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:310;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);color:#fff;
+  font:inherit;font-size:14px;font-weight:700;padding:9px 16px;border-radius:22px;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#photoClose:active{background:rgba(255,255,255,.3)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chips button{background:var(--accent-soft);border:1px solid #D8E2BE;color:var(--accent-deep);
   font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:16px;white-space:nowrap}
@@ -382,7 +388,10 @@ body.auth .auth-only{display:inline-block}
   </div>
 </div></div>
 
-<div id="photoView" onclick="this.classList.remove('on')"><img id="photoViewImg"></div>
+<div id="photoView" onclick="if(event.target===this) closePhoto()">
+  <button id="photoClose" onclick="closePhoto()" aria-label="닫기">✕ 닫기</button>
+  <img id="photoViewImg" alt="">
+</div>
 <div id="loading"><div class="spin"></div></div>
 <div id="toast"></div>
 
@@ -740,11 +749,33 @@ function loadPhoto(fid, el){
     if(res.data){ IMG_CACHE[fid]=res.data; el.src=res.data; }
   });
 }
+let photoOpen = false;
 function viewPhoto(fid){
   const v=$('photoView'), im=$('photoViewImg');
   im.src = IMG_CACHE[fid]||'';
   v.classList.add('on');
+  document.body.style.overflow='hidden';
+  if(!photoOpen){
+    photoOpen = true;
+    history.pushState({photo:true}, '');
+  }
 }
+function closePhoto(){
+  if(!photoOpen){ $('photoView').classList.remove('on'); return; }
+  history.back();   // popstate 에서 실제로 닫힘
+}
+function hidePhoto(){
+  photoOpen = false;
+  $('photoView').classList.remove('on');
+  $('photoViewImg').src='';
+  document.body.style.overflow='';
+}
+window.addEventListener('popstate', ()=>{
+  if(photoOpen) hidePhoto();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && photoOpen) closePhoto();
+});
 function removePhoto(postId, fid){
   if(!confirm('이 사진을 삭제할까요?'))return;
   call('removePhoto',{postId:postId, fileId:String(fid)},d=>{
