@@ -94,15 +94,27 @@ h2{font-size:19px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
 
 /* 상단 탭 — 빨랫줄에 걸린 메모지 (가로 스크롤) */
 .nav-wrap{position:sticky;top:0;z-index:60;background:var(--bg);padding:2px 0 8px;
-  box-shadow:0 8px 12px -10px rgba(58,53,44,.35)}
+  --tabline:rgba(58,53,44,.35);
+  box-shadow:0 8px 12px -10px var(--tabline);
+  transition:box-shadow .35s ease}
 nav{width:100%;max-width:640px;margin:0 auto;overflow-x:auto;overflow-y:hidden;
   scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch}
 nav::-webkit-scrollbar{display:none}
 .rope{position:relative;display:inline-flex;flex-wrap:nowrap;gap:11px;
   min-width:100%;padding:20px 18px 12px;box-sizing:border-box;justify-content:center}
+/* 탭 선택에 따라 하단 라인 색이 바뀜 */
+.nav-wrap[data-pg="home"]{--tabline:rgba(120,160,70,.55)}
+.nav-wrap[data-pg="fee"]{--tabline:rgba(200,160,50,.55)}
+.nav-wrap[data-pg="event"]{--tabline:rgba(215,120,130,.55)}
+.nav-wrap[data-pg="board"]{--tabline:rgba(90,150,190,.55)}
+.nav-wrap[data-pg="photo"]{--tabline:rgba(80,180,150,.55)}
+.nav-wrap[data-pg="info"]{--tabline:rgba(150,120,200,.55)}
 /* 빨랫줄 (살짝 처진 곡선) */
 .rope::before{content:'';position:absolute;left:0;right:0;top:8px;height:13px;
   border-bottom:2px solid #C2AE93;border-radius:0 0 50% 50% / 0 0 13px 13px;pointer-events:none}
+.nav-wrap::after{content:'';display:block;height:2px;margin:6px 0 -8px;
+  background:linear-gradient(90deg,transparent 0%,var(--tabline) 18%,var(--tabline) 82%,transparent 100%);
+  transition:background .35s ease}
 /* 메모지 */
 nav button{position:relative;flex:0 0 auto;margin-top:9px;
   background:linear-gradient(180deg,#FFFDF4 0%,#FBF7E7 100%);
@@ -289,7 +301,7 @@ body.auth .auth-only{display:inline-block}
   <button class="login-btn" id="loginBtn" onclick="onLoginBtn()">로그인</button>
 </header>
 
-<div class="nav-wrap">
+<div class="nav-wrap" data-pg="home">
   <nav>
     <div class="rope">
       <button class="on" data-pg="home" onclick="go('home',this)">홈</button>
@@ -553,6 +565,7 @@ function go(pg, btn){
   $('pg-'+pg).classList.add('on');
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  document.querySelector('.nav-wrap').dataset.pg = pg;
   try{ btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); }catch(e){}
   window.scrollTo(0,0);
 }
