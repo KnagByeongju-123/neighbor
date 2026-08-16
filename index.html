@@ -185,6 +185,10 @@ body.auth .auth-only{display:inline-block}
 .notice-box .s{font-size:13px;margin-top:3px;white-space:pre-wrap}
 .photo-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .photo-preview img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (min-width:520px){.gallery{grid-template-columns:repeat(4,1fr)}}
+.gallery img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;background:#EFEEDD}
+.gallery .empty{grid-column:1/-1}
 .post-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;margin-top:10px}
 .post-photos .ph{position:relative}
 .post-photos img{width:100%;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;background:#EFEEDD}
@@ -264,6 +268,7 @@ body.auth .auth-only{display:inline-block}
       <button data-pg="fee" onclick="go('fee',this)">회비</button>
       <button data-pg="event" onclick="go('event',this)">모임</button>
       <button data-pg="board" onclick="go('board',this)">게시판</button>
+      <button data-pg="photo" onclick="go('photo',this)">텃밭사진관</button>
       <button data-pg="info" onclick="go('info',this)">회원정보</button>
     </div>
   </nav>
@@ -317,6 +322,12 @@ body.auth .auth-only{display:inline-block}
     <div class="page-head"><h2>게시판</h2>
       <button class="btn btn-primary btn-sm auth-only" onclick="openPost()">＋ 글쓰기</button></div>
     <div id="postList"></div>
+  </section>
+
+  <!-- 텃밭사진관 -->
+  <section class="page" id="pg-photo">
+    <div class="page-head"><h2>텃밭사진관</h2></div>
+    <div id="galleryGrid" class="gallery"></div>
   </section>
 
   <!-- 회원정보 -->
@@ -412,13 +423,17 @@ body.auth .auth-only{display:inline-block}
   <input type="hidden" id="mmId">
   <div class="row2">
     <div class="field"><label>이름</label><input id="mmName" placeholder="이름"></div>
-    <div class="field"><label>직책</label><select id="mmRole"><option>일반</option><option>계주</option><option>총무</option></select></div>
+    <div class="field"><label>직책</label><select id="mmRole"><option>일반</option><option>회장</option><option>총무</option></select></div>
   </div>
   <div class="row2">
     <div class="field"><label>연락처</label><input id="mmPhone" inputmode="tel" placeholder="010-"></div>
     <div class="field"><label>가입일</label><input id="mmJoin" type="date"></div>
   </div>
-  <div class="field"><label>주소</label><input id="mmAddr" placeholder="주소"></div>
+  <div class="row2">
+    <div class="field"><label>배우자 (부부 세트)</label><select id="mmSpouse"><option value="">없음</option></select></div>
+    <div class="field"><label>가입 구분</label><input id="mmSpouseHint" disabled placeholder="배우자 선택 시 주소 자동입력" style="font-size:12px"></div>
+  </div>
+  <div class="field"><label>주소 (부부 동일 주소)</label><input id="mmAddr" placeholder="주소"></div>
   <div class="row2">
     <div class="field"><label>PIN (로그인용)</label><input id="mmPin" inputmode="numeric" placeholder="변경 시에만 입력"></div>
     <div class="field"><label>비고</label><input id="mmNote"></div>
@@ -451,7 +466,7 @@ function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'
 function won(n){ return Number(n||0).toLocaleString('ko-KR'); }
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
 function loading(b){ $('loading').classList.toggle('on',b); }
-function isAdmin(){ return AUTH && ['계주','총무','PM'].includes(AUTH['직책']); }
+function isAdmin(){ return AUTH && ['회장','총무','PM','계주'].includes(AUTH['직책']); }
 function refreshAuthUI(){
   document.body.classList.toggle('auth', !!AUTH);
   document.body.classList.toggle('admin', isAdmin());
@@ -566,11 +581,20 @@ function renderDues(){
       (paid[n]=paid[n]||new Set()).add(mo);
     });
   });
-  let h='<tr><th>회원</th>'; for(let m=1;m<=12;m++) h+='<th>'+m+'</th>'; h+='</tr>';
-  h += mems.map(mb=>{
-    let r='<tr><td>'+esc(mb['이름'])+'</td>';
+  // 부부 세트 + 미혼 단독으로 행 구성
+  const rows = [], used = {};
+  couples().forEach(c=>{
+    rows.push({label:'💑 '+c[0]+'·'+c[1], names:c});
+    used[c[0]]=1; used[c[1]]=1;
+  });
+  mems.forEach(mb=>{ if(!used[mb['이름']]) rows.push({label:mb['이름'], names:[mb['이름']]}); });
+
+  let h='<tr><th>회원(부부)</th>'; for(let m=1;m<=12;m++) h+='<th>'+m+'</th>'; h+='</tr>';
+  h += rows.map(rw=>{
+    let r='<tr><td>'+esc(rw.label)+'</td>';
     for(let m=1;m<=12;m++){
-      r += '<td>'+((paid[mb['이름']]||new Set()).has(m)?'<span class="ok">✓</span>':'')+'</td>';
+      const ok = rw.names.some(n=>(paid[n]||new Set()).has(m));
+      r += '<td>'+(ok?'<span class="ok">✓</span>':'')+'</td>';
     }
     return r+'</tr>';
   }).join('');
@@ -627,25 +651,55 @@ function loadVisiblePhotos(){
 function renderInfo(){
   const mems = activeMembers();
   const act = !!AUTH;
-  let h = '<tr><th>이름</th><th>직책</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
+  let h = '<tr><th>이름</th><th>직책</th><th>부부</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
   h += mems.length ? mems.map(m=>{
     const editable = isAdmin() || (AUTH && AUTH['이름']===m['이름']);
     return '<tr><td>'+esc(m['이름'])+'</td>'+
       '<td class="c">'+esc(m['직책']||'일반')+'</td>'+
+      '<td class="c">'+(m['배우자']?'💑 '+esc(m['배우자']):'-')+'</td>'+
       '<td class="c">'+(m['연락처']?'<a href="tel:'+esc(m['연락처'])+'" style="color:var(--accent);text-decoration:none">'+esc(m['연락처'])+'</a>':'-')+'</td>'+
       '<td>'+esc(m['주소']||'-')+'</td>'+
       '<td>'+esc(m['비고']||'-')+'</td>'+
       (act?'<td class="c">'+(editable?'<button class="btn btn-ghost btn-sm" onclick="openMember('+m['ID']+')">수정</button>':'')+'</td>':'')+
       '</tr>';
-  }).join('') : '<tr><td colspan="'+(act?6:5)+'" style="text-align:center;color:var(--ink-soft);padding:22px 0">등록된 회원이 없습니다</td></tr>';
+  }).join('') : '<tr><td colspan="'+(act?7:6)+'" style="text-align:center;color:var(--ink-soft);padding:22px 0">등록된 회원이 없습니다</td></tr>';
   $('infoTbl').innerHTML = h;
 }
-function renderAll(){ renderStats(); renderHome(); renderFees(); renderEvents(); renderPosts(); renderInfo(); }
+function renderGallery(){
+  const items = [];
+  DATA.posts.slice().sort((a,b)=>String(b['날짜']||'').localeCompare(String(a['날짜']||''))).forEach(p=>{
+    String(p['fileIds']||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(fid=>items.push(fid));
+  });
+  $('galleryGrid').innerHTML = items.length
+    ? items.map(fid=>'<img data-fid="'+fid+'" onclick="viewPhoto(\''+fid+'\')" alt="">').join('')
+    : '<div class="empty">아직 사진이 없습니다.<br>게시판에 사진을 올리면 여기에 모여요 🌱</div>';
+  document.querySelectorAll('#galleryGrid img[data-fid]').forEach(el=>{ if(!el.src) loadPhoto(el.dataset.fid, el); });
+}
+function renderAll(){ renderStats(); renderHome(); renderFees(); renderEvents(); renderPosts(); renderInfo(); renderGallery(); }
 
 /* 회비 */
+function couples(){
+  const seen = {}, out = [];
+  activeMembers().forEach(m=>{
+    const sp = m['배우자'];
+    if(!sp) return;
+    if(!activeMembers().some(x=>x['이름']===sp)) return;
+    const key = [m['이름'],sp].sort().join('|');
+    if(seen[key]) return; seen[key]=1;
+    out.push([m['이름'],sp].sort());
+  });
+  return out;
+}
 function fillMemberSel(){
-  $('feeMember').innerHTML = '<option value="">-</option>' +
-    activeMembers().map(m=>'<option>'+esc(m['이름'])+'</option>').join('');
+  let opts = '<option value="">-</option>';
+  const used = {};
+  couples().forEach(c=>{
+    opts += '<option value="'+esc(c[0])+', '+esc(c[1])+'">💑 '+esc(c[0])+'·'+esc(c[1])+'</option>';
+    used[c[0]]=1; used[c[1]]=1;
+  });
+  // 배우자 없는 회원만 단독 표시
+  opts += activeMembers().filter(m=>!used[m['이름']]).map(m=>'<option>'+esc(m['이름'])+'</option>').join('');
+  $('feeMember').innerHTML = opts;
 }
 function renderFeeChips(){
   const kind = $('feeKind').value;
@@ -908,16 +962,34 @@ function openMember(id){
   $('mmRole').value=m?m['직책']:'일반'; $('mmPhone').value=m?m['연락처']:'';
   $('mmJoin').value=m?m['가입일']:''; $('mmAddr').value=m?(m['주소']||''):'';
   $('mmPin').value=''; $('mmNote').value=m?m['비고']:'';
+  const others = activeMembers().filter(x=>!m || x['이름']!==m['이름']);
+  $('mmSpouse').innerHTML = '<option value="">없음</option>' +
+    others.map(x=>'<option'+((m && m['배우자']===x['이름'])?' selected':'')+'>'+esc(x['이름'])+'</option>').join('');
+  $('mmSpouse').onchange = ()=>{
+    const sp = DATA.members.find(x=>x['이름']===$('mmSpouse').value);
+    if(sp && sp['주소'] && !$('mmAddr').value.trim()) $('mmAddr').value = sp['주소'];
+  };
   $('mmRole').disabled = !isAdmin();
   $('mmDel').style.display = (m && isAdmin())?'block':'none';
   openM('mMember');
 }
 function saveMember(){
   if(!$('mmName').value.trim()){ alert('이름을 입력해 주세요.'); return; }
-  call('saveMember',{ID:$('mmId').value,'이름':$('mmName').value.trim(),'직책':$('mmRole').value,
+  const myName = $('mmName').value.trim(), spName = $('mmSpouse').value;
+  call('saveMember',{ID:$('mmId').value,'이름':myName,'직책':$('mmRole').value,
     '연락처':$('mmPhone').value.trim(),'주소':$('mmAddr').value.trim(),'가입일':$('mmJoin').value,
-    'PIN':$('mmPin').value.trim(),'비고':$('mmNote').value.trim()},d=>{
-    DATA.members=d; closeM('mMember'); renderInfo(); fillMemberSel(); renderDues(); toast('저장되었습니다');
+    'PIN':$('mmPin').value.trim(),'비고':$('mmNote').value.trim(),'배우자':spName},d=>{
+    DATA.members=d;
+    // 배우자 쪽 레코드에도 상호 연결 + 주소 동기화
+    const sp = spName ? DATA.members.find(x=>x['이름']===spName) : null;
+    if(sp && sp['배우자']!==myName){
+      call('saveMember',{ID:sp['ID'],'이름':sp['이름'],'직책':sp['직책']||'일반',
+        '연락처':sp['연락처']||'','주소':$('mmAddr').value.trim()||sp['주소']||'','가입일':sp['가입일']||'',
+        'PIN':'','비고':sp['비고']||'','배우자':myName},d2=>{
+        DATA.members=d2; renderInfo(); fillMemberSel(); renderDues();
+      });
+    }
+    closeM('mMember'); renderInfo(); fillMemberSel(); renderDues(); toast('저장되었습니다');
   });
 }
 function deleteMember(){
