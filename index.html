@@ -27,8 +27,11 @@ input,select,textarea{font-family:inherit;font-size:16px}
 
 /* 헤더 */
 header{padding:18px 18px 8px;display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto}
-header h1{font-size:21px;font-weight:800;letter-spacing:-.5px}
-header h1 small{font-size:12px;font-weight:600;color:var(--earth);margin-left:6px;vertical-align:2px}
+header h1{font-size:21px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:2px}
+header h1 .brand{font-family:'Gaegu','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+  font-weight:700;font-size:30px;letter-spacing:0;line-height:1}
+header h1 .brand span{color:var(--c)}
+header h1 small{font-size:12px;font-weight:600;color:var(--earth);margin-left:6px;align-self:flex-end;padding-bottom:4px}
 .login-btn{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--ink)}
 .login-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
 
@@ -250,7 +253,7 @@ body.auth .auth-only{display:inline-block}
 </div>
 
 <header>
-  <h1>🏡 이웃사촌<small>계모임</small></h1>
+  <h1>🏡 <span class="brand"><span style="--c:#5B9BD5">이</span><span style="--c:#EFB93F">웃</span><span style="--c:#E8746A">사</span><span style="--c:#5FBEA8">촌</span></span><small>계모임</small></h1>
   <button class="login-btn" id="loginBtn" onclick="onLoginBtn()">로그인</button>
 </header>
 
