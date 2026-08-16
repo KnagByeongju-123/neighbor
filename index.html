@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F5F0">
+<title>이웃사촌</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
+<style>
+:root{
+  --bg:#F7F5F0; --card:#FFFFFF; --line:#E8E4DC;
+  --ink:#2B2A26; --ink-soft:#8A857A;
+  --accent:#D96C47; --accent-soft:#FBEDE6;
+  --green:#4E8A5F; --red:#C74B3C;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;
+  background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:16px}
+
+/* 헤더 */
+header{padding:22px 18px 12px;display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto}
+header h1{font-size:21px;font-weight:800;letter-spacing:-.5px}
+header h1 small{font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:6px;vertical-align:2px}
+.login-btn{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--ink)}
+.login-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+main{max-width:640px;margin:0 auto;padding:4px 16px 24px}
+.page{display:none}
+.page.on{display:block}
+h2{font-size:17px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px}
+.page-head h2{margin:0}
+
+/* 카드/버튼 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.btn{border:none;border-radius:10px;padding:9px 15px;font-size:14px;font-weight:700}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn-sm{padding:4px 10px;font-size:12.5px;border-radius:8px}
+.btn-danger{background:transparent;border:1px solid var(--line);color:var(--red)}
+
+/* 통계 3열 */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 10px;text-align:center}
+.stat .label{font-size:11.5px;color:var(--ink-soft);font-weight:600;margin-bottom:4px;white-space:nowrap}
+.stat .value{font-size:17px;font-weight:800;letter-spacing:-.4px}
+.stat .value small{font-size:11px;font-weight:600;color:var(--ink-soft)}
+
+/* 리스트 아이템 */
+.item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:none}
+.item .t{font-weight:700;font-size:14.5px}
+.item .s{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+.amt-in{color:var(--green);font-weight:800}
+.amt-out{color:var(--red);font-weight:800}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent);margin-right:6px;vertical-align:1px}
+.badge.gray{background:#F0EEE8;color:var(--ink-soft)}
+
+/* 납부 그리드 */
+.dues-wrap{overflow-x:auto}
+.dues{border-collapse:collapse;width:100%;min-width:520px}
+.dues th,.dues td{border:1px solid var(--line);padding:6px 4px;font-size:12px;text-align:center}
+.dues th{background:#FAF8F4;font-weight:700;color:var(--ink-soft)}
+.dues td:first-child,.dues th:first-child{position:sticky;left:0;background:var(--card);font-weight:700;min-width:64px;z-index:1}
+.dues th:first-child{background:#FAF8F4}
+.dues .ok{color:var(--green);font-weight:800}
+.year-sel{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.year-sel button{border:1px solid var(--line);background:var(--card);border-radius:8px;width:30px;height:30px;font-size:15px}
+.year-sel b{font-size:15px}
+
+/* 하단 탭 */
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;max-width:100%;padding-bottom:env(safe-area-inset-bottom);z-index:50}
+nav button{flex:1;background:none;border:none;padding:9px 0 7px;font-size:10.5px;font-weight:600;color:var(--ink-soft)}
+nav button .ico{display:block;font-size:20px;margin-bottom:1px}
+nav button.on{color:var(--accent)}
+
+/* 모달 */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(30,28,24,.45);z-index:100;align-items:flex-end;justify-content:center}
+.modal-bg.on{display:flex}
+.modal{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;
+  padding:20px 18px calc(24px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto}
+.modal h3{font-size:16.5px;font-weight:800;margin-bottom:14px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;background:#FCFBF9;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{min-height:90px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.modal-btns .btn{flex:1;padding:12px}
+
+/* 토스트 */
+#toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
+  background:#2B2A26;color:#fff;padding:9px 18px;border-radius:22px;font-size:13.5px;font-weight:600;
+  opacity:0;pointer-events:none;transition:.25s;z-index:200;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#loading{display:none;position:fixed;inset:0;z-index:150;align-items:center;justify-content:center;background:rgba(247,245,240,.5)}
+#loading.on{display:flex}
+.spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:var(--ink-soft);font-size:13.5px;padding:26px 0}
+.admin-only{display:none}
+body.admin .admin-only{display:inline-block}
+.auth-only{display:none}
+body.auth .auth-only{display:inline-block}
+.notice-box{background:var(--accent-soft);border:1px solid #F3D5C7;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.notice-box .t{font-weight:800;font-size:14px;color:var(--accent)}
+.notice-box .s{font-size:13px;margin-top:3px;white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏡 이웃사촌<small>계모임</small></h1>
+  <button class="login-btn" id="loginBtn" onclick="onLoginBtn()">로그인</button>
+</header>
+
+<main>
+  <!-- 홈 -->
+  <section class="page on" id="pg-home">
+    <div class="stats">
+      <div class="stat"><div class="label">총 수입</div><div class="value" id="hIn" style="color:var(--green)">-</div></div>
+      <div class="stat"><div class="label">총 지출</div><div class="value" id="hOut" style="color:var(--red)">-</div></div>
+      <div class="stat"><div class="label">잔액</div><div class="value" id="hBal">-</div></div>
+    </div>
+    <div id="hNotice"></div>
+    <h2>다가오는 모임</h2>
+    <div class="card" id="hEvents"></div>
+    <h2>최근 소식</h2>
+    <div class="card" id="hPosts"></div>
+  </section>
+
+  <!-- 회비 -->
+  <section class="page" id="pg-fee">
+    <div class="page-head"><h2>회비</h2>
+      <button class="btn btn-primary btn-sm admin-only" onclick="openFee()">＋ 내역 등록</button></div>
+    <div class="stats">
+      <div class="stat"><div class="label">총 수입</div><div class="value" id="fIn" style="color:var(--green)">-</div></div>
+      <div class="stat"><div class="label">총 지출</div><div class="value" id="fOut" style="color:var(--red)">-</div></div>
+      <div class="stat"><div class="label">잔액</div><div class="value" id="fBal">-</div></div>
+    </div>
+    <div class="card">
+      <div class="year-sel">
+        <button onclick="chgYear(-1)">‹</button><b id="duesYear"></b><button onclick="chgYear(1)">›</button>
+        <span style="font-size:12px;color:var(--ink-soft)">월회비 납부 현황 (내용에 "회비" 포함 기준)</span>
+      </div>
+      <div class="dues-wrap"><table class="dues" id="duesTbl"></table></div>
+    </div>
+    <div class="card" id="feeList"></div>
+  </section>
+
+  <!-- 모임 -->
+  <section class="page" id="pg-event">
+    <div class="page-head"><h2>모임</h2>
+      <button class="btn btn-primary btn-sm admin-only" onclick="openEvent()">＋ 모임 등록</button></div>
+    <div class="card" id="eventList"></div>
+  </section>
+
+  <!-- 게시판 -->
+  <section class="page" id="pg-board">
+    <div class="page-head"><h2>게시판</h2>
+      <button class="btn btn-primary btn-sm auth-only" onclick="openPost()">＋ 글쓰기</button></div>
+    <div id="postList"></div>
+  </section>
+
+  <!-- 회원 -->
+  <section class="page" id="pg-member">
+    <div class="page-head"><h2>회원 <span id="memCnt" style="font-size:13px;color:var(--ink-soft);font-weight:600"></span></h2>
+      <button class="btn btn-primary btn-sm admin-only" onclick="openMember()">＋ 회원 등록</button></div>
+    <div class="card" id="memberList"></div>
+  </section>
+</main>
+
+<nav>
+  <button class="on" data-pg="home" onclick="go('home',this)"><span class="ico">🏠</span>홈</button>
+  <button data-pg="fee" onclick="go('fee',this)"><span class="ico">💰</span>회비</button>
+  <button data-pg="event" onclick="go('event',this)"><span class="ico">📅</span>모임</button>
+  <button data-pg="board" onclick="go('board',this)"><span class="ico">📝</span>게시판</button>
+  <button data-pg="member" onclick="go('member',this)"><span class="ico">👥</span>회원</button>
+</nav>
+
+<!-- 로그인 모달 -->
+<div class="modal-bg" id="mLogin"><div class="modal">
+  <h3>로그인</h3>
+  <div class="field"><label>이름</label><input id="liName" placeholder="이름"></div>
+  <div class="field"><label>PIN</label><input id="liPin" type="password" inputmode="numeric" placeholder="PIN 번호"></div>
+  <div class="modal-btns">
+    <button class="btn btn-ghost" onclick="closeM('mLogin')">취소</button>
+    <button class="btn btn-primary" onclick="doLogin()">로그인</button>
+  </div>
+</div></div>
+
+<!-- 회비 모달 -->
+<div class="modal-bg" id="mFee"><div class="modal">
+  <h3 id="feeTitle">회비 내역 등록</h3>
+  <input type="hidden" id="feeId">
+  <div class="row2">
+    <div class="field"><label>날짜</label><input id="feeDate" type="date"></div>
+    <div class="field"><label>구분</label><select id="feeKind"><option>수입</option><option>지출</option></select></div>
+  </div>
+  <div class="field"><label>내용</label><input id="feeDetail" placeholder="예: 3월 월회비"></div>
+  <div class="row2">
+    <div class="field"><label>금액</label><input id="feeAmt" type="number" inputmode="numeric" placeholder="0"></div>
+    <div class="field"><label>회원명 (월회비인 경우)</label><select id="feeMember"><option value="">-</option></select></div>
+  </div>
+  <div class="modal-btns">
+    <button class="btn btn-ghost" onclick="closeM('mFee')">취소</button>
+    <button class="btn btn-primary" onclick="saveFee()">저장</button>
+  </div>
+</div></div>
+
+<!-- 모임 모달 -->
+<div class="modal-bg" id="mEvent"><div class="modal">
+  <h3 id="evTitle">모임 등록</h3>
+  <input type="hidden" id="evId">
+  <div class="row2">
+    <div class="field"><label>날짜</label><input id="evDate" type="date"></div>
+    <div class="field"><label>시간</label><input id="evTime" type="time"></div>
+  </div>
+  <div class="field"><label>장소</label><input id="evPlace" placeholder="장소"></div>
+  <div class="field"><label>메모</label><textarea id="evMemo" placeholder="메모"></textarea></div>
+  <div class="modal-btns">
+    <button class="btn btn-ghost" onclick="closeM('mEvent')">취소</button>
+    <button class="btn btn-primary" onclick="saveEvent()">저장</button>
+  </div>
+</div></div>
+
+<!-- 글쓰기 모달 -->
+<div class="modal-bg" id="mPost"><div class="modal">
+  <h3 id="poTitle">글쓰기</h3>
+  <input type="hidden" id="poId">
+  <div class="field"><label>종류</label><select id="poKind"><option>일반</option><option>공지</option></select></div>
+  <div class="field"><label>제목</label><input id="poTtl" placeholder="제목"></div>
+  <div class="field"><label>내용</label><textarea id="poContent" placeholder="내용"></textarea></div>
+  <div class="modal-btns">
+    <button class="btn btn-ghost" onclick="closeM('mPost')">취소</button>
+    <button class="btn btn-primary" onclick="savePost()">저장</button>
+  </div>
+</div></div>
+
+<!-- 회원 모달 -->
+<div class="modal-bg" id="mMember"><div class="modal">
+  <h3 id="mmTitle">회원 등록</h3>
+  <input type="hidden" id="mmId">
+  <div class="row2">
+    <div class="field"><label>이름</label><input id="mmName" placeholder="이름"></div>
+    <div class="field"><label>직책</label><select id="mmRole"><option>일반</option><option>계주</option><option>총무</option></select></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>연락처</label><input id="mmPhone" inputmode="tel" placeholder="010-"></div>
+    <div class="field"><label>가입일</label><input id="mmJoin" type="date"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>PIN (로그인용)</label><input id="mmPin" inputmode="numeric" placeholder="변경 시에만 입력"></div>
+    <div class="field"><label>비고</label><input id="mmNote"></div>
+  </div>
+  <div class="modal-btns">
+    <button class="btn btn-danger" id="mmDel" style="display:none" onclick="deleteMember()">삭제</button>
+    <button class="btn btn-ghost" onclick="closeM('mMember')">취소</button>
+    <button class="btn btn-primary" onclick="saveMember()">저장</button>
+  </div>
+</div></div>
+
+<div id="loading"><div class="spin"></div></div>
+<div id="toast"></div>
+
+<script>
+const SUPA_URL = 'https://jgvikmakenpllwxwdugk.supabase.co/rest/v1/rpc/ns_api';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpndmlrbWFrZW5wbGx3eHdkdWdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMzA3OTcsImV4cCI6MjA5MjYwNjc5N30.Vm-MDfZFf7-ay0ipXJQ8QkZvUa9ZXGXzboHgU8dy9cg';
+
+let DATA = { members:[], fees:[], events:[], posts:[], settings:{} };
+let AUTH = null;
+try{ AUTH = JSON.parse(localStorage.getItem('nsAuth')||'null'); }catch(e){}
+let duesYear = new Date().getFullYear();
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function won(n){ return Number(n||0).toLocaleString('ko-KR'); }
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function loading(b){ $('loading').classList.toggle('on',b); }
+function isAdmin(){ return AUTH && ['계주','총무','PM'].includes(AUTH['직책']); }
+function refreshAuthUI(){
+  document.body.classList.toggle('auth', !!AUTH);
+  document.body.classList.toggle('admin', isAdmin());
+  const b=$('loginBtn');
+  if(AUTH){ b.textContent = AUTH['이름']; b.classList.add('on'); }
+  else{ b.textContent='로그인'; b.classList.remove('on'); }
+}
+
+function supaFetch(action, payload){
+  return fetch(SUPA_URL,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY},
+    body: JSON.stringify({ action, payload: payload||{}, auth: AUTH?{'이름':AUTH['이름'],'PIN':AUTH['PIN']}:null })
+  }).then(r=>r.json());
+}
+function call(action, payload, done){
+  loading(true);
+  supaFetch(action,payload).then(res=>{
+    loading(false);
+    if(res.error){ alert('오류: '+res.error); return; }
+    done(res.data);
+  }).catch(e=>{ loading(false); alert('연결 오류: '+e.message); });
+}
+
+/* 탭 */
+function go(pg, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  $('pg-'+pg).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  window.scrollTo(0,0);
+}
+function openM(id){ $(id).classList.add('on'); }
+function closeM(id){ $(id).classList.remove('on'); }
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('on'); }));
+
+/* 로그인 */
+function onLoginBtn(){
+  if(AUTH){ if(confirm('로그아웃할까요?')){ AUTH=null; localStorage.removeItem('nsAuth'); refreshAuthUI(); renderAll(); } }
+  else openM('mLogin');
+}
+function doLogin(){
+  const name=$('liName').value.trim(), pin=$('liPin').value.trim();
+  if(!name||!pin){ alert('이름과 PIN을 입력해 주세요.'); return; }
+  loading(true);
+  supaFetch('login',{'이름':name,'PIN':pin}).then(res=>{
+    loading(false);
+    if(res.error){ alert(res.error); return; }
+    AUTH = { '이름':res.data['이름'], '직책':res.data['직책'], 'PIN':pin };
+    localStorage.setItem('nsAuth', JSON.stringify(AUTH));
+    closeM('mLogin'); refreshAuthUI(); renderAll(); toast(AUTH['이름']+'님 환영합니다');
+  }).catch(e=>{ loading(false); alert('연결 오류: '+e.message); });
+}
+
+/* 렌더 */
+function activeMembers(){ return DATA.members.filter(m=>m['상태']!=='탈퇴'); }
+function feeSums(){
+  let i=0,o=0;
+  DATA.fees.forEach(f=>{ const a=Number(f['금액']||0); if(f['구분']==='지출') o+=a; else i+=a; });
+  return {i,o,b:i-o};
+}
+function renderStats(){
+  const s=feeSums();
+  ['h','f'].forEach(p=>{
+    $(p+'In').innerHTML = won(s.i)+'<small>원</small>';
+    $(p+'Out').innerHTML = won(s.o)+'<small>원</small>';
+    $(p+'Bal').innerHTML = won(s.b)+'<small>원</small>';
+  });
+}
+function renderHome(){
+  // 공지 (최신 1건)
+  const nt = DATA.posts.find(p=>p['종류']==='공지');
+  $('hNotice').innerHTML = nt ? '<div class="notice-box"><div class="t">📢 '+esc(nt['제목'])+'</div><div class="s">'+esc(nt['내용'])+'</div></div>' : '';
+  // 다가오는 모임
+  const today = new Date().toISOString().slice(0,10);
+  const up = DATA.events.filter(e=>e['날짜']>=today).sort((a,b)=>a['날짜']<b['날짜']?-1:1).slice(0,3);
+  $('hEvents').innerHTML = up.length ? up.map(e=>
+    '<div class="item"><div><div class="t">'+esc(e['장소']||'미정')+'</div>'+
+    '<div class="s">'+esc(e['날짜'])+(e['시간']?' '+esc(e['시간']):'')+(e['참가자']?' · 참석 '+e['참가자'].split(',').filter(x=>x.trim()).length+'명':'')+'</div></div></div>'
+  ).join('') : '<div class="empty">예정된 모임이 없습니다</div>';
+  // 최근 소식
+  const ps = DATA.posts.slice(0,3);
+  $('hPosts').innerHTML = ps.length ? ps.map(p=>
+    '<div class="item"><div><div class="t">'+(p['종류']==='공지'?'<span class="badge">공지</span>':'')+esc(p['제목'])+'</div>'+
+    '<div class="s">'+esc(p['작성자'])+' · '+esc(p['날짜'])+'</div></div></div>'
+  ).join('') : '<div class="empty">아직 글이 없습니다</div>';
+}
+function renderFees(){
+  renderStats();
+  renderDues();
+  const list = DATA.fees;
+  $('feeList').innerHTML = list.length ? list.map(f=>
+    '<div class="item"><div><div class="t">'+esc(f['내용'])+(f['회원명']?' <span class="badge gray">'+esc(f['회원명'])+'</span>':'')+'</div>'+
+    '<div class="s">'+esc(f['날짜'])+'</div></div>'+
+    '<div style="text-align:right"><div class="'+(f['구분']==='지출'?'amt-out':'amt-in')+'">'+(f['구분']==='지출'?'-':'+')+won(f['금액'])+'원</div>'+
+    (isAdmin()?'<div style="margin-top:3px"><button class="btn btn-ghost btn-sm" onclick="openFee('+f['ID']+')">수정</button> '+
+    '<button class="btn btn-danger btn-sm" onclick="delFee('+f['ID']+')">삭제</button></div>':'')+'</div></div>'
+  ).join('') : '<div class="empty">회비 내역이 없습니다</div>';
+}
+function renderDues(){
+  $('duesYear').textContent = duesYear + '년';
+  const mems = activeMembers();
+  const paid = {}; // name -> Set(month)
+  DATA.fees.forEach(f=>{
+    if(f['구분']!=='수입' || !f['회원명'] || !String(f['내용']||'').includes('회비')) return;
+    const d=String(f['날짜']||'');
+    if(!d.startsWith(String(duesYear))) return;
+    const mo=parseInt(d.slice(5,7),10);
+    String(f['회원명']).split(',').map(x=>x.trim()).filter(Boolean).forEach(n=>{
+      (paid[n]=paid[n]||new Set()).add(mo);
+    });
+  });
+  let h='<tr><th>회원</th>'; for(let m=1;m<=12;m++) h+='<th>'+m+'</th>'; h+='</tr>';
+  h += mems.map(mb=>{
+    let r='<tr><td>'+esc(mb['이름'])+'</td>';
+    for(let m=1;m<=12;m++){
+      r += '<td>'+((paid[mb['이름']]||new Set()).has(m)?'<span class="ok">✓</span>':'')+'</td>';
+    }
+    return r+'</tr>';
+  }).join('');
+  $('duesTbl').innerHTML = h;
+}
+function renderEvents(){
+  const list = DATA.events;
+  $('eventList').innerHTML = list.length ? list.map(e=>{
+    const players = String(e['참가자']||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const joined = AUTH && players.includes(AUTH['이름']);
+    return '<div class="item"><div style="flex:1"><div class="t">'+esc(e['장소']||'미정')+'</div>'+
+    '<div class="s">'+esc(e['날짜'])+(e['시간']?' '+esc(e['시간']):'')+(e['메모']?' · '+esc(e['메모']):'')+'</div>'+
+    (players.length?'<div class="s">참석('+players.length+'): '+esc(players.join(', '))+'</div>':'')+'</div>'+
+    '<div style="text-align:right;flex-shrink:0">'+
+    (AUTH?'<button class="btn '+(joined?'btn-ghost':'btn-primary')+' btn-sm" onclick="applyEvent('+e['ID']+')">'+(joined?'참석 취소':'참석')+'</button>':'')+
+    (isAdmin()?'<div style="margin-top:4px"><button class="btn btn-ghost btn-sm" onclick="openEvent('+e['ID']+')">수정</button> '+
+    '<button class="btn btn-danger btn-sm" onclick="delEvent('+e['ID']+')">삭제</button></div>':'')+'</div></div>';
+  }).join('') : '<div class="empty">등록된 모임이 없습니다</div>';
+}
+function renderPosts(){
+  const list = DATA.posts;
+  $('postList').innerHTML = list.length ? list.map(p=>{
+    const mine = AUTH && (AUTH['이름']===p['작성자'] || isAdmin());
+    return '<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'+
+    '<div><div style="font-weight:800">'+(p['종류']==='공지'?'<span class="badge">공지</span>':'')+esc(p['제목'])+'</div>'+
+    '<div class="s" style="font-size:12px;color:var(--ink-soft);margin-top:2px">'+esc(p['작성자'])+' · '+esc(p['날짜'])+'</div></div>'+
+    (mine?'<div style="flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="openPost('+p['ID']+')">수정</button> '+
+    '<button class="btn btn-danger btn-sm" onclick="delPost('+p['ID']+')">삭제</button></div>':'')+'</div>'+
+    '<div style="margin-top:8px;font-size:14px;white-space:pre-wrap">'+esc(p['내용'])+'</div></div>';
+  }).join('') : '<div class="card"><div class="empty">아직 글이 없습니다</div></div>';
+}
+function renderMembers(){
+  const mems = activeMembers();
+  $('memCnt').textContent = mems.length + '명';
+  $('memberList').innerHTML = mems.length ? mems.map(m=>
+    '<div class="item"><div><div class="t">'+esc(m['이름'])+
+    (m['직책']!=='일반'?' <span class="badge">'+esc(m['직책'])+'</span>':'')+'</div>'+
+    '<div class="s">'+esc(m['연락처']||'')+(m['가입일']?' · '+esc(m['가입일'])+' 가입':'')+(m['비고']?' · '+esc(m['비고']):'')+'</div></div>'+
+    (isAdmin()?'<button class="btn btn-ghost btn-sm" onclick="openMember('+m['ID']+')">수정</button>':'')+'</div>'
+  ).join('') : '<div class="empty">등록된 회원이 없습니다<br>우측 상단에서 회원을 등록해 주세요</div>';
+}
+function renderAll(){ renderStats(); renderHome(); renderFees(); renderEvents(); renderPosts(); renderMembers(); }
+
+/* 회비 */
+function fillMemberSel(){
+  $('feeMember').innerHTML = '<option value="">-</option>' +
+    activeMembers().map(m=>'<option>'+esc(m['이름'])+'</option>').join('');
+}
+function openFee(id){
+  fillMemberSel();
+  const f = id ? DATA.fees.find(x=>x['ID']===id) : null;
+  $('feeTitle').textContent = f?'회비 내역 수정':'회비 내역 등록';
+  $('feeId').value = f?f['ID']:'';
+  $('feeDate').value = f?f['날짜']:new Date().toISOString().slice(0,10);
+  $('feeKind').value = f?f['구분']:'수입';
+  $('feeDetail').value = f?f['내용']:'';
+  $('feeAmt').value = f?f['금액']:'';
+  $('feeMember').value = f?f['회원명']:'';
+  openM('mFee');
+}
+function saveFee(){
+  if(!$('feeDetail').value.trim()){ alert('내용을 입력해 주세요.'); return; }
+  call('saveFee',{ID:$('feeId').value,'날짜':$('feeDate').value,'구분':$('feeKind').value,
+    '내용':$('feeDetail').value.trim(),'금액':$('feeAmt').value||0,'회원명':$('feeMember').value},d=>{
+    DATA.fees=d; closeM('mFee'); renderFees(); renderStats(); toast('저장되었습니다');
+  });
+}
+function delFee(id){ if(!confirm('삭제할까요?'))return;
+  call('deleteFee',{ID:id},d=>{ DATA.fees=d; renderFees(); renderStats(); toast('삭제되었습니다'); }); }
+
+/* 모임 */
+function openEvent(id){
+  const e = id ? DATA.events.find(x=>x['ID']===id) : null;
+  $('evTitle').textContent = e?'모임 수정':'모임 등록';
+  $('evId').value=e?e['ID']:''; $('evDate').value=e?e['날짜']:'';
+  $('evTime').value=e?e['시간']:''; $('evPlace').value=e?e['장소']:''; $('evMemo').value=e?e['메모']:'';
+  openM('mEvent');
+}
+function saveEvent(){
+  if(!$('evDate').value){ alert('날짜를 입력해 주세요.'); return; }
+  call('saveEvent',{ID:$('evId').value,'날짜':$('evDate').value,'시간':$('evTime').value,
+    '장소':$('evPlace').value.trim(),'메모':$('evMemo').value.trim()},d=>{
+    DATA.events=d; closeM('mEvent'); renderEvents(); renderHome(); toast('저장되었습니다');
+  });
+}
+function delEvent(id){ if(!confirm('삭제할까요?'))return;
+  call('deleteEvent',{ID:id},d=>{ DATA.events=d; renderEvents(); renderHome(); toast('삭제되었습니다'); }); }
+function applyEvent(id){
+  call('applyEvent',{ID:id},d=>{ DATA.events=d; renderEvents(); renderHome(); });
+}
+
+/* 게시판 */
+function openPost(id){
+  const p = id ? DATA.posts.find(x=>x['ID']===id) : null;
+  $('poTitle').textContent=p?'글 수정':'글쓰기';
+  $('poId').value=p?p['ID']:''; $('poKind').value=p?p['종류']:'일반';
+  $('poTtl').value=p?p['제목']:''; $('poContent').value=p?p['내용']:'';
+  openM('mPost');
+}
+function savePost(){
+  if(!$('poTtl').value.trim()){ alert('제목을 입력해 주세요.'); return; }
+  call('savePost',{ID:$('poId').value,'종류':$('poKind').value,'제목':$('poTtl').value.trim(),'내용':$('poContent').value},d=>{
+    DATA.posts=d; closeM('mPost'); renderPosts(); renderHome(); toast('저장되었습니다');
+  });
+}
+function delPost(id){ if(!confirm('삭제할까요?'))return;
+  call('deletePost',{ID:id},d=>{ DATA.posts=d; renderPosts(); renderHome(); toast('삭제되었습니다'); }); }
+
+/* 회원 */
+function openMember(id){
+  const m = id ? DATA.members.find(x=>x['ID']===id) : null;
+  $('mmTitle').textContent=m?'회원 수정':'회원 등록';
+  $('mmId').value=m?m['ID']:''; $('mmName').value=m?m['이름']:'';
+  $('mmRole').value=m?m['직책']:'일반'; $('mmPhone').value=m?m['연락처']:'';
+  $('mmJoin').value=m?m['가입일']:''; $('mmPin').value=''; $('mmNote').value=m?m['비고']:'';
+  $('mmDel').style.display = m?'block':'none';
+  openM('mMember');
+}
+function saveMember(){
+  if(!$('mmName').value.trim()){ alert('이름을 입력해 주세요.'); return; }
+  call('saveMember',{ID:$('mmId').value,'이름':$('mmName').value.trim(),'직책':$('mmRole').value,
+    '연락처':$('mmPhone').value.trim(),'가입일':$('mmJoin').value,'PIN':$('mmPin').value.trim(),'비고':$('mmNote').value.trim()},d=>{
+    DATA.members=d; closeM('mMember'); renderMembers(); fillMemberSel(); renderDues(); toast('저장되었습니다');
+  });
+}
+function deleteMember(){
+  if(!confirm('이 회원을 삭제할까요? 되돌릴 수 없습니다.'))return;
+  call('deleteMember',{ID:$('mmId').value},d=>{
+    DATA.members=d; closeM('mMember'); renderMembers(); renderDues(); toast('삭제되었습니다');
+  });
+}
+
+/* 납부 연도 */
+function chgYear(d){ duesYear+=d; renderDues(); }
+
+/* 초기 로드 */
+refreshAuthUI();
+call('getAll', {}, d=>{ DATA=d; renderAll(); });
+</script>
+</body>
+</html>
