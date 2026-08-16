@@ -67,6 +67,10 @@ h2{font-size:17px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
 .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--accent-soft);color:var(--accent-deep);margin-right:6px;vertical-align:1px}
 .badge.gray{background:var(--earth-soft);color:var(--earth)}
 
+.bank-card{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.bank-card .bank-info{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.bank-card .bank-info b{font-size:14px}
+.bank-card .bank-info em{font-style:normal;color:var(--ink-soft);font-size:12.5px}
 /* 납부 그리드 */
 .dues-wrap{overflow-x:auto}
 .dues{border-collapse:collapse;width:100%;min-width:520px}
@@ -293,6 +297,13 @@ body.auth .auth-only{display:inline-block}
   <section class="page" id="pg-fee">
     <div class="page-head"><h2>회비</h2>
       <button class="btn btn-primary btn-sm admin-only" onclick="openFee()">＋ 내역 등록</button></div>
+    <div class="card bank-card">
+      <div class="bank-info">
+        <b>🏦 회비 입금 계좌</b>
+        <span>카카오뱅크 3333-22-9564442 <em>(예금주: 김홍우)</em></span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="payDues()">계좌 복사 · 앱 열기</button>
+    </div>
     <div class="stats">
       <div class="stat"><div class="label">총 수입</div><div class="value" id="fIn" style="color:var(--green)">-</div></div>
       <div class="stat"><div class="label">총 지출</div><div class="value" id="fOut" style="color:var(--red)">-</div></div>
@@ -326,7 +337,9 @@ body.auth .auth-only{display:inline-block}
 
   <!-- 텃밭사진관 -->
   <section class="page" id="pg-photo">
-    <div class="page-head"><h2>텃밭사진관</h2></div>
+    <div class="page-head"><h2>텃밭사진관</h2>
+      <button class="btn btn-primary btn-sm auth-only" onclick="$('galFiles').click()">＋ 사진 올리기</button></div>
+    <input type="file" id="galFiles" accept="image/*" multiple hidden>
     <div id="galleryGrid" class="gallery"></div>
   </section>
 
@@ -665,6 +678,24 @@ function renderInfo(){
   }).join('') : '<tr><td colspan="'+(act?7:6)+'" style="text-align:center;color:var(--ink-soft);padding:22px 0">등록된 회원이 없습니다</td></tr>';
   $('infoTbl').innerHTML = h;
 }
+$('galFiles').addEventListener('change', async ()=>{
+  const files = Array.from($('galFiles').files);
+  if(!files.length) return;
+  if(!AUTH){ alert('로그인 후 사진을 올릴 수 있습니다.'); $('galFiles').value=''; return; }
+  loading(true);
+  try{
+    const today = new Date();
+    const ttl = (today.getMonth()+1)+'월 '+today.getDate()+'일 텃밭사진';
+    const res = await supaFetch('savePost',{ID:'','종류':'일반','제목':ttl,'내용':''});
+    if(res.error) throw new Error(res.error);
+    DATA.posts = res.data.posts;
+    await uploadPhotos(res.data.ID, files);
+    renderPosts(); renderHome(); renderGallery();
+    toast('사진 '+files.length+'장이 올라갔습니다');
+  }catch(e){ alert('사진 업로드 오류: '+e.message); }
+  loading(false);
+  $('galFiles').value='';
+});
 function renderGallery(){
   const items = [];
   DATA.posts.slice().sort((a,b)=>String(b['날짜']||'').localeCompare(String(a['날짜']||''))).forEach(p=>{
@@ -1001,6 +1032,15 @@ function deleteMember(){
 
 /* 납부 연도 */
 function chgYear(d){ duesYear+=d; renderDues(); }
+const BANK_ACC = '3333229564442';
+async function payDues(){
+  try{ await navigator.clipboard.writeText(BANK_ACC); toast('계좌번호가 복사되었습니다'); }
+  catch(e){
+    prompt('아래 계좌번호를 길게 눌러 복사하세요', BANK_ACC);
+  }
+  // 카카오뱅크 앱 열기 시도 (설치된 경우)
+  setTimeout(()=>{ location.href = 'kakaobank://'; }, 600);
+}
 
 /* 인트로 */
 function closeIntro(){ $('intro').classList.add('hide'); }
