@@ -1095,9 +1095,10 @@ function saveMember(){
     DATA.members=d;
     // 배우자 쪽 레코드에도 상호 연결 + 주소 동기화
     const sp = spName ? DATA.members.find(x=>x['이름']===spName) : null;
-    if(sp && sp['배우자']!==myName){
+    const myAddr = $('mmAddr').value.trim();
+    if(sp && (sp['배우자']!==myName || (myAddr && (sp['주소']||'')!==myAddr))){
       call('saveMember',{ID:sp['ID'],'이름':sp['이름'],'직책':sp['직책']||'일반',
-        '연락처':sp['연락처']||'','주소':$('mmAddr').value.trim()||sp['주소']||'','가입일':sp['가입일']||'',
+        '연락처':sp['연락처']||'','주소':myAddr||sp['주소']||'','가입일':sp['가입일']||'',
         'PIN':'','비고':sp['비고']||'','배우자':myName},d2=>{
         DATA.members=d2; renderInfo(); fillMemberSel(); renderDues();
       });
