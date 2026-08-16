@@ -74,10 +74,10 @@ h2{font-size:17px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
 /* 납부 그리드 */
 .dues-wrap{overflow-x:auto}
 .dues{border-collapse:collapse;width:100%;min-width:430px}
-.dues th,.dues td{border:1px solid var(--line);padding:6px 2px;font-size:12px;text-align:center}
+.dues th,.dues td{border:1px solid var(--line);padding:6px 2px;font-size:12px;text-align:center;width:6.6%}
 .dues td:first-child,.dues th:first-child{padding:6px 6px;text-align:left;white-space:nowrap}
 .dues th{background:#F4F3E4;font-weight:700;color:var(--ink-soft)}
-.dues td:first-child,.dues th:first-child{position:sticky;left:0;background:var(--card);font-weight:700;min-width:64px;z-index:1}
+.dues td:first-child,.dues th:first-child{position:sticky;left:0;background:var(--card);font-weight:700;width:1%;min-width:0;z-index:1}
 .dues th:first-child{background:#F4F3E4}
 .dues .ok{color:var(--green);font-weight:800}
 .info-tbl tr.tint0 td{background:#F3F7EA}
@@ -117,6 +117,17 @@ nav button::before{content:'';position:absolute;top:-9px;left:50%;margin-left:-5
   box-shadow:0 1px 2px rgba(58,53,44,.3);pointer-events:none}
 nav button::after{content:'';position:absolute;top:-3px;left:50%;margin-left:-6px;
   width:12px;height:2px;border-radius:2px;background:rgba(255,255,255,.55);pointer-events:none}
+/* 메모지 색상 — 로고 파스텔 계열로 탭마다 다르게 */
+nav button:nth-child(1){background:linear-gradient(180deg,#F4FAE6 0%,#E6F2CE 100%);border-color:#CFE0AC;color:#5C7038}
+nav button:nth-child(2){background:linear-gradient(180deg,#FFF8E2 0%,#FBEEC4 100%);border-color:#EBD79A;color:#8A6B22}
+nav button:nth-child(3){background:linear-gradient(180deg,#FDEEF0 0%,#F9DDE1 100%);border-color:#EFC2C8;color:#95505A}
+nav button:nth-child(4){background:linear-gradient(180deg,#EAF4FA 0%,#D8EAF4 100%);border-color:#B6D5E6;color:#3E6C86}
+nav button:nth-child(5){background:linear-gradient(180deg,#E9F7F1 0%,#D6EFE4 100%);border-color:#AEDCC9;color:#38715E}
+nav button:nth-child(6){background:linear-gradient(180deg,#F3EFFA 0%,#E6DEF4 100%);border-color:#CBBCE4;color:#5F4F86}
+/* 빨래집게도 살짝 다른 나무색 */
+nav button:nth-child(2)::before{background:linear-gradient(180deg,#D3A96F 0%,#B48952 55%,#997140 100%)}
+nav button:nth-child(4)::before{background:linear-gradient(180deg,#BE9058 0%,#9E7342 55%,#845E32 100%)}
+nav button:nth-child(6)::before{background:linear-gradient(180deg,#CFA267 0%,#AF824C 55%,#946C3C 100%)}
 /* 기울기 (자연스럽게) */
 nav button:nth-child(1){transform:rotate(-2.4deg)}
 nav button:nth-child(2){transform:rotate(1.8deg)}
@@ -125,11 +136,14 @@ nav button:nth-child(4){transform:rotate(2.2deg)}
 nav button:nth-child(5){transform:rotate(-1.9deg)}
 nav button:nth-child(6){transform:rotate(1.5deg)}
 /* 선택된 메모지 — 똑바로 서면서 올라옴 */
-nav button.on{transform:rotate(0deg) translateY(-3px) !important;
-  background:linear-gradient(180deg,#F3F7E4 0%,#E7EFD2 100%);
-  border-color:var(--accent);color:var(--accent-deep);
-  box-shadow:0 5px 12px rgba(124,154,78,.3)}
-nav button.on::before{background:linear-gradient(180deg,#8FAE5E 0%,#6F8F44 55%,#5A7736 100%)}
+nav button.on{transform:rotate(0deg) translateY(-4px) scale(1.04) !important;
+  font-weight:800;box-shadow:0 6px 14px rgba(58,53,44,.22)}
+nav button:nth-child(1).on{background:linear-gradient(180deg,#DCEFBB 0%,#C6E39B 100%);border-color:#8FB55C;color:#425722}
+nav button:nth-child(2).on{background:linear-gradient(180deg,#FBEAB4 0%,#F6DC8C 100%);border-color:#D9B655;color:#6E5312}
+nav button:nth-child(3).on{background:linear-gradient(180deg,#FAD2D8 0%,#F4BAC3 100%);border-color:#DE909B;color:#7A3742}
+nav button:nth-child(4).on{background:linear-gradient(180deg,#CDE6F3 0%,#B2D6EB 100%);border-color:#79AECC;color:#2A5471}
+nav button:nth-child(5).on{background:linear-gradient(180deg,#CCEEE0 0%,#B0E2CE 100%);border-color:#71C0A5;color:#245A48}
+nav button:nth-child(6).on{background:linear-gradient(180deg,#E1D6F3 0%,#CEBFE9 100%);border-color:#9E86C9;color:#4A3970}
 nav button:hover:not(.on){box-shadow:1px 4px 9px rgba(58,53,44,.2)}
 @media(max-width:420px){
   .rope{gap:8px;padding:20px 12px 12px}
