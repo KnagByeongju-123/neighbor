@@ -183,9 +183,11 @@ nav button:hover:not(.on){box-shadow:1px 4px 9px rgba(58,53,44,.2)}
   transition:opacity .45s ease, visibility .45s}
 #intro.hide{opacity:0;visibility:hidden;pointer-events:none}
 #intro .globe{width:min(54vw,224px);aspect-ratio:1/1;border-radius:50%;object-fit:cover;
+  filter:saturate(.82) brightness(1.04);
   animation:floaty 5s ease-in-out infinite}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
-#intro .logo-cal{width:min(62vw,268px);height:auto;margin-top:16px;display:block}
+#intro .logo-cal{width:min(62vw,268px);height:auto;margin-top:16px;display:block;
+  filter:saturate(.8) brightness(1.05)}
 #intro .sub{font-size:13.5px;color:var(--ink-soft);margin-top:8px;font-weight:600}
 #intro .pinbox{width:100%;max-width:290px;margin-top:30px}
 #intro .pinbox input{width:100%;border:1px solid var(--line);border-radius:14px;background:#fff;
