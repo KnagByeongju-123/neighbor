@@ -670,18 +670,17 @@ function loadVisiblePhotos(){
 function renderInfo(){
   const mems = activeMembers();
   const act = !!AUTH;
-  let h = '<tr><th>이름</th><th>직책</th><th>부부</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
+  let h = '<tr><th>이름</th><th>직책</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
   h += mems.length ? mems.map(m=>{
     const editable = isAdmin() || (AUTH && AUTH['이름']===m['이름']);
     return '<tr><td>'+esc(m['이름'])+'</td>'+
       '<td class="c">'+esc(m['직책']||'일반')+'</td>'+
-      '<td class="c">'+(m['배우자']?'💑 '+esc(m['배우자']):'-')+'</td>'+
       '<td class="c">'+(m['연락처']?'<a href="tel:'+esc(m['연락처'])+'" style="color:var(--accent);text-decoration:none">'+esc(m['연락처'])+'</a>':'-')+'</td>'+
       '<td>'+esc(m['주소']||'-')+'</td>'+
       '<td>'+esc(m['비고']||'-')+'</td>'+
       (act?'<td class="c">'+(editable?'<button class="btn btn-ghost btn-sm" onclick="openMember('+m['ID']+')">수정</button>':'')+'</td>':'')+
       '</tr>';
-  }).join('') : '<tr><td colspan="'+(act?7:6)+'" style="text-align:center;color:var(--ink-soft);padding:22px 0">등록된 회원이 없습니다</td></tr>';
+  }).join('') : '<tr><td colspan="'+(act?6:5)+'" style="text-align:center;color:var(--ink-soft);padding:22px 0">등록된 회원이 없습니다</td></tr>';
   $('infoTbl').innerHTML = h;
 }
 $('galFiles').addEventListener('change', async ()=>{
