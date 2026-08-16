@@ -189,10 +189,15 @@ body.auth .auth-only{display:inline-block}
 .notice-box .s{font-size:13px;margin-top:3px;white-space:pre-wrap}
 .photo-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .photo-preview img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
-.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-@media (min-width:520px){.gallery{grid-template-columns:repeat(4,1fr)}}
-.gallery img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;background:#EFEEDD}
-.gallery .empty{grid-column:1/-1}
+.gallery{display:flex;flex-direction:column;gap:12px}
+.gal-card{background:var(--card,#fff);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 1px 6px rgba(90,100,70,.05)}
+.gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+@media (min-width:520px){.gal-grid{grid-template-columns:repeat(4,1fr)}}
+.gal-grid .ph{position:relative}
+.gal-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;background:#EFEEDD}
+.gal-grid .rm{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:1;cursor:pointer}
+.gal-memo{margin-top:8px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.gal-meta{margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-soft)}
 .post-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px;margin-top:10px}
 .post-photos .ph{position:relative}
 .post-photos img{width:100%;height:96px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer;background:#EFEEDD}
@@ -682,11 +687,12 @@ $('galFiles').addEventListener('change', async ()=>{
   const files = Array.from($('galFiles').files);
   if(!files.length) return;
   if(!AUTH){ alert('로그인 후 사진을 올릴 수 있습니다.'); $('galFiles').value=''; return; }
+  const memo = prompt('사진에 남길 한마디 (생략 가능)') || '';
   loading(true);
   try{
     const today = new Date();
     const ttl = (today.getMonth()+1)+'월 '+today.getDate()+'일 텃밭사진';
-    const res = await supaFetch('savePost',{ID:'','종류':'일반','제목':ttl,'내용':''});
+    const res = await supaFetch('savePost',{ID:'','종류':'일반','제목':ttl,'내용':memo.trim()});
     if(res.error) throw new Error(res.error);
     DATA.posts = res.data.posts;
     await uploadPhotos(res.data.ID, files);
@@ -696,14 +702,35 @@ $('galFiles').addEventListener('change', async ()=>{
   loading(false);
   $('galFiles').value='';
 });
-function renderGallery(){
-  const items = [];
-  DATA.posts.slice().sort((a,b)=>String(b['날짜']||'').localeCompare(String(a['날짜']||''))).forEach(p=>{
-    String(p['fileIds']||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(fid=>items.push(fid));
+function editGalMemo(id){
+  const p = DATA.posts.find(x=>x['ID']===id); if(!p) return;
+  const memo = prompt('한마디 수정', p['내용']||'');
+  if(memo===null) return;
+  call('savePost',{ID:id,'종류':p['종류']||'일반','제목':p['제목'],'내용':memo.trim()},d=>{
+    DATA.posts=d.posts; renderPosts(); renderGallery(); toast('수정되었습니다');
   });
-  $('galleryGrid').innerHTML = items.length
-    ? items.map(fid=>'<img data-fid="'+fid+'" onclick="viewPhoto(\''+fid+'\')" alt="">').join('')
-    : '<div class="empty">아직 사진이 없습니다.<br>게시판에 사진을 올리면 여기에 모여요 🌱</div>';
+}
+function delGalPost(id){
+  if(!confirm('이 사진 묶음을 삭제할까요? 사진도 함께 지워집니다.'))return;
+  call('deletePost',{ID:id},d=>{ DATA.posts=d; renderPosts(); renderHome(); renderGallery(); toast('삭제되었습니다'); });
+}
+function renderGallery(){
+  const posts = DATA.posts.slice()
+    .sort((a,b)=>String(b['날짜']||'').localeCompare(String(a['날짜']||'')) || (b['ID']-a['ID']))
+    .filter(p=>String(p['fileIds']||'').trim());
+  $('galleryGrid').innerHTML = posts.length ? posts.map(p=>{
+    const ids = String(p['fileIds']).split(',').map(x=>x.trim()).filter(Boolean);
+    const mine = AUTH && (AUTH['이름']===p['작성자'] || isAdmin());
+    return '<div class="gal-card">'+
+      '<div class="gal-grid">'+ids.map(fid=>
+        '<div class="ph"><img data-fid="'+fid+'" onclick="viewPhoto(\''+fid+'\')" alt="">'+
+        (mine?'<button class="rm" onclick="removePhoto('+p['ID']+',\''+fid+'\')">✕</button>':'')+'</div>').join('')+'</div>'+
+      (p['내용']?'<div class="gal-memo">💬 '+esc(p['내용'])+'</div>':'')+
+      '<div class="gal-meta"><span>'+esc(p['작성자'])+' · '+esc(p['날짜'])+'</span>'+
+      (mine?'<span><button class="btn btn-ghost btn-sm" onclick="editGalMemo('+p['ID']+')">한마디 수정</button> '+
+      '<button class="btn btn-danger btn-sm" onclick="delGalPost('+p['ID']+')">삭제</button></span>':'')+'</div>'+
+    '</div>';
+  }).join('') : '<div class="empty">아직 사진이 없습니다.<br>＋ 사진 올리기 버튼으로 텃밭 소식을 나눠요 🌱</div>';
   document.querySelectorAll('#galleryGrid img[data-fid]').forEach(el=>{ if(!el.src) loadPhoto(el.dataset.fid, el); });
 }
 function renderAll(){ renderStats(); renderHome(); renderFees(); renderEvents(); renderPosts(); renderInfo(); renderGallery(); }
