@@ -80,6 +80,10 @@ h2{font-size:17px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
 .dues td:first-child,.dues th:first-child{position:sticky;left:0;background:var(--card);font-weight:700;min-width:64px;z-index:1}
 .dues th:first-child{background:#F4F3E4}
 .dues .ok{color:var(--green);font-weight:800}
+.info-tbl tr.tint0 td{background:#F3F7EA}
+.info-tbl tr.tint1 td{background:#FBF3E6}
+.info-tbl tr.tint2 td{background:#EDF4F6}
+.info-tbl tr.tint3 td{background:#F8EFF2}
 .year-sel{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:nowrap}
 .year-sel b{font-size:14.5px;font-weight:800;white-space:nowrap}
 .year-sel .yr{display:flex;align-items:center;gap:4px;flex-shrink:0}
@@ -670,10 +674,26 @@ function loadVisiblePhotos(){
 function renderInfo(){
   const mems = activeMembers();
   const act = !!AUTH;
+  // 부부 나란히 배치: 대표(먼저 등록된 쪽) 기준 가나다순, 부부는 같은 색
+  const byName = {}; mems.forEach(m=>byName[m['이름']]=m);
+  const ordered = [], used = {}, pairs = [];
+  mems.forEach(m=>{
+    const sp = byName[m['배우자']];
+    if(sp && !used[m['이름']] && !used[sp['이름']]){
+      const rep2 = (Number(m['ID'])<Number(sp['ID']))?[m,sp]:[sp,m];
+      pairs.push(rep2); used[m['이름']]=1; used[sp['이름']]=1;
+    }
+  });
+  pairs.sort((a,b)=>String(a[0]['이름']).localeCompare(String(b[0]['이름']),'ko'));
+  pairs.forEach((pr,i)=>{ pr[0]._tint=i%4; pr[1]._tint=i%4; ordered.push(pr[0],pr[1]); });
+  mems.filter(m=>!used[m['이름']])
+      .sort((a,b)=>String(a['이름']).localeCompare(String(b['이름']),'ko'))
+      .forEach(m=>{ m._tint=-1; ordered.push(m); });
+
   let h = '<tr><th>이름</th><th>직책</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
-  h += mems.length ? mems.map(m=>{
+  h += ordered.length ? ordered.map(m=>{
     const editable = isAdmin() || (AUTH && AUTH['이름']===m['이름']);
-    return '<tr><td>'+esc(m['이름'])+'</td>'+
+    return '<tr'+(m._tint>=0?' class="tint'+m._tint+'"':'')+'><td>'+esc(m['이름'])+'</td>'+
       '<td class="c">'+esc(m['직책']||'일반')+'</td>'+
       '<td class="c">'+(m['연락처']?'<a href="tel:'+esc(m['연락처'])+'" style="color:var(--accent);text-decoration:none">'+esc(m['연락처'])+'</a>':'-')+'</td>'+
       '<td>'+esc(m['주소']||'-')+'</td>'+
