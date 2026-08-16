@@ -210,6 +210,9 @@ body.auth .auth-only{display:inline-block}
   font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:16px;white-space:nowrap}
 .chips button:active{background:var(--accent);color:#fff}
 .chips .none{font-size:12px;color:var(--ink-soft);padding:3px 0}
+.hint{font-size:12px;color:var(--earth);background:var(--earth-soft);border-radius:8px;
+  padding:7px 10px;margin-top:7px;line-height:1.45}
+.hint b{color:var(--accent-deep)}
 .info-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .info-wrap::-webkit-scrollbar{height:6px}
 .info-wrap::-webkit-scrollbar-thumb{background:#DAD5C2;border-radius:3px}
@@ -336,8 +339,9 @@ body.auth .auth-only{display:inline-block}
     <div class="field"><label>구분</label><select id="feeKind"><option>수입</option><option>지출</option></select></div>
   </div>
   <div class="field"><label>내용</label>
-    <input id="feeDetail" placeholder="예: 3월 월회비" list="feeDetailList" autocomplete="off">
+    <input id="feeDetail" placeholder="예: 8월 회비" list="feeDetailList" autocomplete="off">
     <datalist id="feeDetailList"></datalist>
+    <div class="hint" id="feeDetailHint">💡 월회비는 <b>“○월 회비”</b> 형식으로 입력해야 납부 현황에 표시됩니다.</div>
     <div class="chips" id="feeDetailChips"></div>
   </div>
   <div class="row2">
@@ -642,11 +646,19 @@ function renderFeeChips(){
     if(!d) return;
     cnt[d] = (cnt[d]||0) + 1;
   });
-  const list = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a] || (a<b?-1:1)).slice(0,12);
+  let list = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a] || (a<b?-1:1)).slice(0,12);
+  // 수입일 때는 선택한 날짜 기준 월회비 후보를 항상 앞에 제시
+  if(kind === '수입'){
+    const d = $('feeDate').value || new Date().toISOString().slice(0,10);
+    const mo = parseInt(String(d).slice(5,7),10) || (new Date().getMonth()+1);
+    const cands = [mo+'월 회비', (mo===12?1:mo+1)+'월 회비'];
+    list = cands.concat(list.filter(x=>!cands.includes(x))).slice(0,12);
+  }
   $('feeDetailList').innerHTML = list.map(d=>'<option value="'+esc(d)+'">').join('');
   $('feeDetailChips').innerHTML = list.length
     ? list.map(d=>'<button type="button" onclick="pickFeeDetail(this)" data-v="'+esc(d)+'">'+esc(d)+'</button>').join('')
     : '<span class="none">기록된 항목이 없습니다</span>';
+  $('feeDetailHint').style.display = (kind === '수입') ? 'block' : 'none';
 }
 function pickFeeDetail(btn){ $('feeDetail').value = btn.dataset.v; $('feeDetail').focus(); }
 
@@ -664,6 +676,7 @@ function openFee(id){
   openM('mFee');
 }
 $('feeKind').addEventListener('change', renderFeeChips);
+$('feeDate').addEventListener('change', renderFeeChips);
 
 function saveFee(){
   if(!$('feeDetail').value.trim()){ alert('내용을 입력해 주세요.'); return; }
