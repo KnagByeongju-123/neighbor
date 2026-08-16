@@ -70,9 +70,12 @@ h2{font-size:17px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
 .dues td:first-child,.dues th:first-child{position:sticky;left:0;background:var(--card);font-weight:700;min-width:64px;z-index:1}
 .dues th:first-child{background:#F4F3E4}
 .dues .ok{color:var(--green);font-weight:800}
-.year-sel{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.year-sel button{border:1px solid var(--line);background:var(--card);border-radius:8px;width:30px;height:30px;font-size:15px}
-.year-sel b{font-size:15px}
+.year-sel{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:nowrap}
+.year-sel b{font-size:14.5px;font-weight:800;white-space:nowrap}
+.year-sel .yr{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.year-sel button{border:1px solid var(--line);background:var(--card);border-radius:8px;
+  width:28px;height:28px;font-size:15px;line-height:1;color:var(--ink);flex-shrink:0}
+.year-sel em{font-style:normal;font-size:14.5px;font-weight:800;min-width:52px;text-align:center;white-space:nowrap}
 
 /* 상단 탭 — 빨랫줄에 걸린 메모지 (가로 스크롤) */
 .nav-wrap{position:sticky;top:0;z-index:60;background:var(--bg);padding:2px 0 8px;
@@ -279,8 +282,10 @@ body.auth .auth-only{display:inline-block}
     </div>
     <div class="card">
       <div class="year-sel">
-        <button onclick="chgYear(-1)">‹</button><b id="duesYear"></b><button onclick="chgYear(1)">›</button>
-        <span style="font-size:12px;color:var(--ink-soft)">월회비 납부 현황 (내용에 "회비" 포함 기준)</span>
+        <b>월회비 납부 현황</b>
+        <span class="yr">
+          <button onclick="chgYear(-1)">‹</button><em id="duesYear"></em><button onclick="chgYear(1)">›</button>
+        </span>
       </div>
       <div class="dues-wrap"><table class="dues" id="duesTbl"></table></div>
     </div>
