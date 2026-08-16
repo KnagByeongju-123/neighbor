@@ -74,19 +74,51 @@ h2{font-size:17px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
 .year-sel button{border:1px solid var(--line);background:var(--card);border-radius:8px;width:30px;height:30px;font-size:15px}
 .year-sel b{font-size:15px}
 
-/* 상단 탭 (가로 스크롤) */
-.nav-wrap{position:sticky;top:0;z-index:60;background:var(--bg);padding:6px 16px 10px;
-  box-shadow:0 6px 10px -8px rgba(0,0,0,.18)}
-nav{display:flex;flex-wrap:nowrap;gap:4px;width:100%;max-width:640px;margin:0 auto;overflow-x:auto;
-  scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;
-  background:var(--card);border:1px solid var(--line);border-radius:26px;padding:5px}
+/* 상단 탭 — 빨랫줄에 걸린 메모지 (가로 스크롤) */
+.nav-wrap{position:sticky;top:0;z-index:60;background:var(--bg);padding:2px 0 8px;
+  box-shadow:0 8px 12px -10px rgba(58,53,44,.35)}
+nav{width:100%;max-width:640px;margin:0 auto;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch}
 nav::-webkit-scrollbar{display:none}
-nav button{flex:0 0 auto;background:none;border:none;color:var(--ink-soft);font:inherit;
-  font-size:14px;font-weight:700;padding:8px 16px;border-radius:22px;white-space:nowrap;
-  transition:background .15s,color .15s}
-nav button.on{background:var(--accent);color:#fff}
-nav button:hover:not(.on){background:var(--accent-soft);color:var(--accent)}
-@media(max-width:420px){ nav button{padding:7px 13px;font-size:13px} }
+.rope{position:relative;display:inline-flex;flex-wrap:nowrap;gap:11px;
+  min-width:100%;padding:20px 18px 12px;box-sizing:border-box;justify-content:center}
+/* 빨랫줄 (살짝 처진 곡선) */
+.rope::before{content:'';position:absolute;left:0;right:0;top:8px;height:13px;
+  border-bottom:2px solid #C2AE93;border-radius:0 0 50% 50% / 0 0 13px 13px;pointer-events:none}
+/* 메모지 */
+nav button{position:relative;flex:0 0 auto;margin-top:9px;
+  background:linear-gradient(180deg,#FFFDF4 0%,#FBF7E7 100%);
+  border:1px solid #E3DCC4;border-radius:3px;
+  color:#6B6455;font:inherit;font-size:14px;font-weight:700;letter-spacing:-.3px;
+  padding:10px 15px 11px;white-space:nowrap;transform-origin:50% -4px;
+  box-shadow:1px 3px 6px rgba(58,53,44,.14);
+  transition:transform .2s ease, box-shadow .2s ease, background .2s, color .2s, border-color .2s}
+/* 빨래집게 */
+nav button::before{content:'';position:absolute;top:-9px;left:50%;margin-left:-5px;
+  width:10px;height:17px;border-radius:2px 2px 3px 3px;
+  background:linear-gradient(180deg,#C89A63 0%,#A87B4A 55%,#8E6538 100%);
+  box-shadow:0 1px 2px rgba(58,53,44,.3);pointer-events:none}
+nav button::after{content:'';position:absolute;top:-3px;left:50%;margin-left:-6px;
+  width:12px;height:2px;border-radius:2px;background:rgba(255,255,255,.55);pointer-events:none}
+/* 기울기 (자연스럽게) */
+nav button:nth-child(1){transform:rotate(-2.4deg)}
+nav button:nth-child(2){transform:rotate(1.8deg)}
+nav button:nth-child(3){transform:rotate(-1.4deg)}
+nav button:nth-child(4){transform:rotate(2.2deg)}
+nav button:nth-child(5){transform:rotate(-1.9deg)}
+nav button:nth-child(6){transform:rotate(1.5deg)}
+/* 선택된 메모지 — 똑바로 서면서 올라옴 */
+nav button.on{transform:rotate(0deg) translateY(-3px) !important;
+  background:linear-gradient(180deg,#F3F7E4 0%,#E7EFD2 100%);
+  border-color:var(--accent);color:var(--accent-deep);
+  box-shadow:0 5px 12px rgba(124,154,78,.3)}
+nav button.on::before{background:linear-gradient(180deg,#8FAE5E 0%,#6F8F44 55%,#5A7736 100%)}
+nav button:hover:not(.on){box-shadow:1px 4px 9px rgba(58,53,44,.2)}
+@media(max-width:420px){
+  .rope{gap:8px;padding:20px 12px 12px}
+  nav button{padding:9px 11px 10px;font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){ nav button{transition:none} }
 
 /* 모달 */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(30,28,24,.45);z-index:100;align-items:flex-end;justify-content:center}
@@ -194,11 +226,13 @@ body.auth .auth-only{display:inline-block}
 
 <div class="nav-wrap">
   <nav>
-    <button class="on" data-pg="home" onclick="go('home',this)">홈</button>
-    <button data-pg="fee" onclick="go('fee',this)">회비</button>
-    <button data-pg="event" onclick="go('event',this)">모임</button>
-    <button data-pg="board" onclick="go('board',this)">게시판</button>
-    <button data-pg="info" onclick="go('info',this)">회원정보</button>
+    <div class="rope">
+      <button class="on" data-pg="home" onclick="go('home',this)">홈</button>
+      <button data-pg="fee" onclick="go('fee',this)">회비</button>
+      <button data-pg="event" onclick="go('event',this)">모임</button>
+      <button data-pg="board" onclick="go('board',this)">게시판</button>
+      <button data-pg="info" onclick="go('info',this)">회원정보</button>
+    </div>
   </nav>
 </div>
 
