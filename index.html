@@ -188,6 +188,20 @@ body.auth .auth-only{display:inline-block}
   font:inherit;font-size:14px;font-weight:700;padding:9px 16px;border-radius:22px;
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 #photoClose:active{background:rgba(255,255,255,.3)}
+/* 다이얼(휠) 시간 선택 */
+.wheel{position:relative;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+  background:#FCFCF5;border:1px solid var(--line);border-radius:12px;overflow:hidden;height:150px}
+.wheel-band{position:absolute;left:6px;right:6px;top:50%;height:42px;margin-top:-21px;
+  background:var(--accent-soft);border-top:1.5px solid var(--accent);border-bottom:1.5px solid var(--accent);
+  border-radius:8px;pointer-events:none;z-index:1}
+.wheel-col{position:relative;z-index:2;height:150px;overflow-y:auto;scroll-snap-type:y mandatory;
+  scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;
+  padding:54px 0;text-align:center}
+.wheel-col::-webkit-scrollbar{display:none}
+.wheel-col div{height:42px;line-height:42px;scroll-snap-align:center;font-size:18px;font-weight:700;
+  color:#B8B2A2;transition:color .15s, transform .15s;cursor:pointer}
+.wheel-col div.sel{color:var(--accent-deep);font-size:20px;font-weight:800}
+.wheel-view{margin-top:7px;text-align:center;font-size:13px;font-weight:700;color:var(--ink-soft)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .chips button{background:var(--accent-soft);border:1px solid #D8E2BE;color:var(--accent-deep);
   font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:16px;white-space:nowrap}
@@ -337,7 +351,16 @@ body.auth .auth-only{display:inline-block}
   <input type="hidden" id="evId">
   <div class="row2">
     <div class="field"><label>날짜</label><input id="evDate" type="date"></div>
-    <div class="field"><label>시간</label><input id="evTime" type="time"></div>
+    <div class="field"><label>시간</label>
+      <input id="evTime" type="hidden">
+      <div class="wheel" id="timeWheel">
+        <div class="wheel-band"></div>
+        <div class="wheel-col" id="wAmpm"></div>
+        <div class="wheel-col" id="wHour"></div>
+        <div class="wheel-col" id="wMin"></div>
+      </div>
+      <div class="wheel-view" id="timeView">시간 미정</div>
+    </div>
   </div>
   <div class="field"><label>장소</label><input id="evPlace" placeholder="장소"></div>
   <div class="field"><label>메모</label><textarea id="evMemo" placeholder="메모"></textarea></div>
@@ -640,13 +663,70 @@ function saveFee(){
 function delFee(id){ if(!confirm('삭제할까요?'))return;
   call('deleteFee',{ID:id},d=>{ DATA.fees=d; renderFees(); renderStats(); toast('삭제되었습니다'); }); }
 
+/* 다이얼 시간 선택 */
+const W_AMPM = ['오전','오후'];
+const W_HOUR = Array.from({length:12},(_,i)=>String(i+1));
+const W_MIN  = Array.from({length:12},(_,i)=>String(i*5).padStart(2,'0'));
+const WHEEL_H = 42;
+let wheelReady = false;
+
+function buildWheel(colId, items){
+  $(colId).innerHTML = items.map((v,i)=>'<div data-i="'+i+'">'+v+'</div>').join('');
+  $(colId).querySelectorAll('div').forEach(el=>{
+    el.addEventListener('click', ()=>{ setWheelIdx(colId, +el.dataset.i, true); });
+  });
+}
+function getWheelIdx(colId){
+  const c = $(colId);
+  return Math.max(0, Math.round(c.scrollTop / WHEEL_H));
+}
+function setWheelIdx(colId, idx, smooth){
+  const c = $(colId);
+  c.scrollTo({ top: idx*WHEEL_H, behavior: smooth?'smooth':'auto' });
+  markWheel(colId, idx);
+}
+function markWheel(colId, idx){
+  $(colId).querySelectorAll('div').forEach((el,i)=>el.classList.toggle('sel', i===idx));
+}
+function syncTime(){
+  const ai = getWheelIdx('wAmpm'), hi = getWheelIdx('wHour'), mi = getWheelIdx('wMin');
+  markWheel('wAmpm',ai); markWheel('wHour',hi); markWheel('wMin',mi);
+  let h = hi + 1;
+  if(ai===1 && h!==12) h += 12;
+  if(ai===0 && h===12) h = 0;
+  const val = String(h).padStart(2,'0')+':'+W_MIN[mi];
+  $('evTime').value = val;
+  $('timeView').textContent = W_AMPM[ai]+' '+W_HOUR[hi]+'시 '+W_MIN[mi]+'분';
+}
+function initWheel(){
+  if(wheelReady) return;
+  buildWheel('wAmpm', W_AMPM); buildWheel('wHour', W_HOUR); buildWheel('wMin', W_MIN);
+  ['wAmpm','wHour','wMin'].forEach(id=>{
+    let t;
+    $(id).addEventListener('scroll', ()=>{ clearTimeout(t); t = setTimeout(syncTime, 90); });
+  });
+  wheelReady = true;
+}
+function setWheelTime(v){
+  initWheel();
+  let h = 19, m = 0;
+  const mt = String(v||'').match(/^(\d{1,2}):(\d{2})/);
+  if(mt){ h = +mt[1]; m = +mt[2]; }
+  const ai = h >= 12 ? 1 : 0;
+  let h12 = h % 12; if(h12===0) h12 = 12;
+  const mi = Math.min(11, Math.round(m/5));
+  setWheelIdx('wAmpm', ai); setWheelIdx('wHour', h12-1); setWheelIdx('wMin', mi);
+  setTimeout(syncTime, 60);
+}
+
 /* 모임 */
 function openEvent(id){
   const e = id ? DATA.events.find(x=>x['ID']===id) : null;
   $('evTitle').textContent = e?'모임 수정':'모임 등록';
   $('evId').value=e?e['ID']:''; $('evDate').value=e?e['날짜']:'';
-  $('evTime').value=e?e['시간']:''; $('evPlace').value=e?e['장소']:''; $('evMemo').value=e?e['메모']:'';
+  $('evPlace').value=e?e['장소']:''; $('evMemo').value=e?e['메모']:'';
   openM('mEvent');
+  setTimeout(()=>setWheelTime(e?e['시간']:'19:00'), 40);
 }
 function saveEvent(){
   if(!$('evDate').value){ alert('날짜를 입력해 주세요.'); return; }
