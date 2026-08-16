@@ -606,7 +606,7 @@ function renderHome(){
     '<div class="s">'+esc(e['날짜'])+(e['시간']?' '+esc(e['시간']):'')+(e['참가자']?' · 참석 '+e['참가자'].split(',').filter(x=>x.trim()).length+'명':'')+'</div></div></div>'
   ).join('') : '<div class="empty">예정된 모임이 없습니다</div>';
   // 최근 소식
-  const ps = DATA.posts.slice(0,3);
+  const ps = DATA.posts.filter(p=>p['종류']!=='사진').slice(0,3);
   $('hPosts').innerHTML = ps.length ? ps.map(p=>
     '<div class="item"><div><div class="t">'+(p['종류']==='공지'?'<span class="badge">공지</span>':'')+esc(p['제목'])+'</div>'+
     '<div class="s">'+esc(p['작성자'])+' · '+esc(p['날짜'])+'</div></div></div>'
@@ -675,7 +675,7 @@ function renderEvents(){
   }).join('') : '<div class="empty">등록된 모임이 없습니다</div>';
 }
 function renderPosts(){
-  const list = DATA.posts;
+  const list = DATA.posts.filter(p=>p['종류']!=='사진');
   $('postList').innerHTML = list.length ? list.map(p=>{
     const canEdit = AUTH && (AUTH['이름']===p['작성자'] || isAdmin());
     const canDel = canEdit;
@@ -745,7 +745,7 @@ $('galFiles').addEventListener('change', async ()=>{
   try{
     const today = new Date();
     const ttl = (today.getMonth()+1)+'월 '+today.getDate()+'일 텃밭사진';
-    const res = await supaFetch('savePost',{ID:'','종류':'일반','제목':ttl,'내용':memo.trim()});
+    const res = await supaFetch('savePost',{ID:'','종류':'사진','제목':ttl,'내용':memo.trim()});
     if(res.error) throw new Error(res.error);
     DATA.posts = res.data.posts;
     await uploadPhotos(res.data.ID, files);
@@ -759,7 +759,7 @@ function editGalMemo(id){
   const p = DATA.posts.find(x=>x['ID']===id); if(!p) return;
   const memo = prompt('한마디 수정', p['내용']||'');
   if(memo===null) return;
-  call('savePost',{ID:id,'종류':p['종류']||'일반','제목':p['제목'],'내용':memo.trim()},d=>{
+  call('savePost',{ID:id,'종류':p['종류']||'사진','제목':p['제목'],'내용':memo.trim()},d=>{
     DATA.posts=d.posts; renderPosts(); renderGallery(); toast('수정되었습니다');
   });
 }
@@ -770,7 +770,7 @@ function delGalPost(id){
 function renderGallery(){
   const posts = DATA.posts.slice()
     .sort((a,b)=>String(b['날짜']||'').localeCompare(String(a['날짜']||'')) || (b['ID']-a['ID']))
-    .filter(p=>String(p['fileIds']||'').trim());
+    .filter(p=>p['종류']==='사진');
   $('galleryGrid').innerHTML = posts.length ? posts.map(p=>{
     const ids = String(p['fileIds']).split(',').map(x=>x.trim()).filter(Boolean);
     const mine = AUTH && (AUTH['이름']===p['작성자'] || isAdmin());
