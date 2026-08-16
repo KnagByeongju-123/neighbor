@@ -155,13 +155,22 @@ body.auth .auth-only{display:inline-block}
   font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:16px;white-space:nowrap}
 .chips button:active{background:var(--accent);color:#fff}
 .chips .none{font-size:12px;color:var(--ink-soft);padding:3px 0}
-.info-wrap{overflow-x:auto}
-.info-tbl{border-collapse:collapse;width:100%;min-width:540px}
-.info-tbl th,.info-tbl td{border:1px solid var(--line);padding:8px 8px;font-size:12.5px;text-align:left;vertical-align:top}
-.info-tbl th{background:#F4F3E4;font-weight:700;color:var(--ink-soft);white-space:nowrap;text-align:center}
-.info-tbl td.c{text-align:center;white-space:nowrap}
-.info-tbl td:first-child,.info-tbl th:first-child{position:sticky;left:0;background:var(--card);font-weight:700;z-index:1;white-space:nowrap}
-.info-tbl th:first-child{background:#F4F3E4}
+.info-wrap{width:100%}
+.info-tbl{border-collapse:collapse;width:100%;table-layout:fixed}
+.info-tbl th,.info-tbl td{border:1px solid var(--line);padding:7px 6px;font-size:12.5px;text-align:left;
+  vertical-align:top;word-break:break-word;overflow-wrap:anywhere}
+.info-tbl th{background:#F4F3E4;font-weight:700;color:var(--ink-soft);text-align:center;white-space:nowrap}
+.info-tbl td.c{text-align:center}
+.info-tbl td:first-child{font-weight:700}
+.info-tbl col.c-name{width:19%}
+.info-tbl col.c-role{width:14%}
+.info-tbl col.c-tel{width:24%}
+.info-tbl col.c-addr{width:24%}
+.info-tbl col.c-note{width:19%}
+.info-tbl col.c-act{width:13%}
+.info-tbl td.c a{word-break:break-all}
+.info-tbl .btn-sm{padding:3px 7px;font-size:11.5px}
+@media(max-width:400px){ .info-tbl th,.info-tbl td{font-size:11.5px;padding:6px 4px} }
 </style>
 </head>
 <body>
@@ -189,7 +198,6 @@ body.auth .auth-only{display:inline-block}
     <button data-pg="fee" onclick="go('fee',this)">회비</button>
     <button data-pg="event" onclick="go('event',this)">모임</button>
     <button data-pg="board" onclick="go('board',this)">게시판</button>
-    <button data-pg="member" onclick="go('member',this)">회원</button>
     <button data-pg="info" onclick="go('info',this)">회원정보</button>
   </nav>
 </div>
@@ -240,13 +248,6 @@ body.auth .auth-only{display:inline-block}
     <div class="page-head"><h2>게시판</h2>
       <button class="btn btn-primary btn-sm auth-only" onclick="openPost()">＋ 글쓰기</button></div>
     <div id="postList"></div>
-  </section>
-
-  <!-- 회원 -->
-  <section class="page" id="pg-member">
-    <div class="page-head"><h2>회원 <span id="memCnt" style="font-size:13px;color:var(--ink-soft);font-weight:600"></span></h2>
-      <button class="btn btn-primary btn-sm admin-only" onclick="openMember()">＋ 회원 등록</button></div>
-    <div class="card" id="memberList"></div>
   </section>
 
   <!-- 회원정보 -->
@@ -534,20 +535,12 @@ function loadVisiblePhotos(){
     if(!el.src) loadPhoto(el.dataset.fid, el);
   });
 }
-function renderMembers(){
-  const mems = activeMembers();
-  $('memCnt').textContent = mems.length + '명';
-  $('memberList').innerHTML = mems.length ? mems.map(m=>
-    '<div class="item"><div><div class="t">'+esc(m['이름'])+
-    (m['직책']!=='일반'?' <span class="badge">'+esc(m['직책'])+'</span>':'')+'</div>'+
-    '<div class="s">'+esc(m['연락처']||'')+(m['주소']?' · '+esc(m['주소']):'')+(m['비고']?' · '+esc(m['비고']):'')+'</div></div>'+
-    ((isAdmin()||(AUTH&&AUTH['이름']===m['이름']))?'<button class="btn btn-ghost btn-sm" onclick="openMember('+m['ID']+')">수정</button>':'')+'</div>'
-  ).join('') : '<div class="empty">등록된 회원이 없습니다<br>우측 상단에서 회원을 등록해 주세요</div>';
-}
 function renderInfo(){
   const mems = activeMembers();
-  let h = '<tr><th>이름</th><th>직책</th><th>연락처</th><th>주소</th><th>비고</th>'+
-    ((AUTH)?'<th></th>':'')+'</tr>';
+  const act = !!AUTH;
+  let h = '<colgroup><col class="c-name"><col class="c-role"><col class="c-tel"><col class="c-addr"><col class="c-note">'+
+    (act?'<col class="c-act">':'')+'</colgroup>';
+  h += '<tr><th>이름</th><th>직책</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
   h += mems.length ? mems.map(m=>{
     const editable = isAdmin() || (AUTH && AUTH['이름']===m['이름']);
     return '<tr><td>'+esc(m['이름'])+'</td>'+
@@ -555,12 +548,12 @@ function renderInfo(){
       '<td class="c">'+(m['연락처']?'<a href="tel:'+esc(m['연락처'])+'" style="color:var(--accent);text-decoration:none">'+esc(m['연락처'])+'</a>':'-')+'</td>'+
       '<td>'+esc(m['주소']||'-')+'</td>'+
       '<td>'+esc(m['비고']||'-')+'</td>'+
-      (AUTH?'<td class="c">'+(editable?'<button class="btn btn-ghost btn-sm" onclick="openMember('+m['ID']+')">수정</button>':'')+'</td>':'')+
+      (act?'<td class="c">'+(editable?'<button class="btn btn-ghost btn-sm" onclick="openMember('+m['ID']+')">수정</button>':'')+'</td>':'')+
       '</tr>';
-  }).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:22px 0">등록된 회원이 없습니다</td></tr>';
+  }).join('') : '<tr><td colspan="'+(act?6:5)+'" style="text-align:center;color:var(--ink-soft);padding:22px 0">등록된 회원이 없습니다</td></tr>';
   $('infoTbl').innerHTML = h;
 }
-function renderAll(){ renderStats(); renderHome(); renderFees(); renderEvents(); renderPosts(); renderMembers(); renderInfo(); }
+function renderAll(){ renderStats(); renderHome(); renderFees(); renderEvents(); renderPosts(); renderInfo(); }
 
 /* 회비 */
 function fillMemberSel(){
@@ -749,13 +742,13 @@ function saveMember(){
   call('saveMember',{ID:$('mmId').value,'이름':$('mmName').value.trim(),'직책':$('mmRole').value,
     '연락처':$('mmPhone').value.trim(),'주소':$('mmAddr').value.trim(),'가입일':$('mmJoin').value,
     'PIN':$('mmPin').value.trim(),'비고':$('mmNote').value.trim()},d=>{
-    DATA.members=d; closeM('mMember'); renderMembers(); renderInfo(); fillMemberSel(); renderDues(); toast('저장되었습니다');
+    DATA.members=d; closeM('mMember'); renderInfo(); fillMemberSel(); renderDues(); toast('저장되었습니다');
   });
 }
 function deleteMember(){
   if(!confirm('이 회원을 삭제할까요? 되돌릴 수 없습니다.'))return;
   call('deleteMember',{ID:$('mmId').value},d=>{
-    DATA.members=d; closeM('mMember'); renderMembers(); renderInfo(); renderDues(); toast('삭제되었습니다');
+    DATA.members=d; closeM('mMember'); renderInfo(); renderDues(); toast('삭제되었습니다');
   });
 }
 
