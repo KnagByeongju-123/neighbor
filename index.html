@@ -150,6 +150,11 @@ body.auth .auth-only{display:inline-block}
 #photoView{display:none;position:fixed;inset:0;background:rgba(20,18,15,.92);z-index:300;align-items:center;justify-content:center}
 #photoView.on{display:flex}
 #photoView img{max-width:96vw;max-height:92vh;border-radius:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{background:var(--accent-soft);border:1px solid #D8E2BE;color:var(--accent-deep);
+  font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:16px;white-space:nowrap}
+.chips button:active{background:var(--accent);color:#fff}
+.chips .none{font-size:12px;color:var(--ink-soft);padding:3px 0}
 .info-wrap{overflow-x:auto}
 .info-tbl{border-collapse:collapse;width:100%;min-width:540px}
 .info-tbl th,.info-tbl td{border:1px solid var(--line);padding:8px 8px;font-size:12.5px;text-align:left;vertical-align:top}
@@ -273,7 +278,11 @@ body.auth .auth-only{display:inline-block}
     <div class="field"><label>날짜</label><input id="feeDate" type="date"></div>
     <div class="field"><label>구분</label><select id="feeKind"><option>수입</option><option>지출</option></select></div>
   </div>
-  <div class="field"><label>내용</label><input id="feeDetail" placeholder="예: 3월 월회비"></div>
+  <div class="field"><label>내용</label>
+    <input id="feeDetail" placeholder="예: 3월 월회비" list="feeDetailList" autocomplete="off">
+    <datalist id="feeDetailList"></datalist>
+    <div class="chips" id="feeDetailChips"></div>
+  </div>
   <div class="row2">
     <div class="field"><label>금액</label><input id="feeAmt" type="number" inputmode="numeric" placeholder="0"></div>
     <div class="field"><label>회원명 (월회비인 경우)</label><select id="feeMember"><option value="">-</option></select></div>
@@ -558,6 +567,23 @@ function fillMemberSel(){
   $('feeMember').innerHTML = '<option value="">-</option>' +
     activeMembers().map(m=>'<option>'+esc(m['이름'])+'</option>').join('');
 }
+function renderFeeChips(){
+  const kind = $('feeKind').value;
+  const cnt = {};
+  DATA.fees.forEach(f=>{
+    if(f['구분'] !== kind) return;
+    const d = String(f['내용']||'').trim();
+    if(!d) return;
+    cnt[d] = (cnt[d]||0) + 1;
+  });
+  const list = Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a] || (a<b?-1:1)).slice(0,12);
+  $('feeDetailList').innerHTML = list.map(d=>'<option value="'+esc(d)+'">').join('');
+  $('feeDetailChips').innerHTML = list.length
+    ? list.map(d=>'<button type="button" onclick="pickFeeDetail(this)" data-v="'+esc(d)+'">'+esc(d)+'</button>').join('')
+    : '<span class="none">기록된 항목이 없습니다</span>';
+}
+function pickFeeDetail(btn){ $('feeDetail').value = btn.dataset.v; $('feeDetail').focus(); }
+
 function openFee(id){
   fillMemberSel();
   const f = id ? DATA.fees.find(x=>x['ID']===id) : null;
@@ -568,8 +594,11 @@ function openFee(id){
   $('feeDetail').value = f?f['내용']:'';
   $('feeAmt').value = f?f['금액']:'';
   $('feeMember').value = f?f['회원명']:'';
+  renderFeeChips();
   openM('mFee');
 }
+$('feeKind').addEventListener('change', renderFeeChips);
+
 function saveFee(){
   if(!$('feeDetail').value.trim()){ alert('내용을 입력해 주세요.'); return; }
   call('saveFee',{ID:$('feeId').value,'날짜':$('feeDate').value,'구분':$('feeKind').value,
