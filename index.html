@@ -187,22 +187,19 @@ body.auth .auth-only{display:inline-block}
   font-size:12.5px;font-weight:700;padding:5px 11px;border-radius:16px;white-space:nowrap}
 .chips button:active{background:var(--accent);color:#fff}
 .chips .none{font-size:12px;color:var(--ink-soft);padding:3px 0}
-.info-wrap{width:100%}
-.info-tbl{border-collapse:collapse;width:100%;table-layout:fixed}
-.info-tbl th,.info-tbl td{border:1px solid var(--line);padding:7px 6px;font-size:12.5px;text-align:left;
-  vertical-align:top;word-break:break-word;overflow-wrap:anywhere}
-.info-tbl th{background:#F4F3E4;font-weight:700;color:var(--ink-soft);text-align:center;white-space:nowrap}
+.info-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.info-wrap::-webkit-scrollbar{height:6px}
+.info-wrap::-webkit-scrollbar-thumb{background:#DAD5C2;border-radius:3px}
+.info-tbl{border-collapse:collapse;width:max-content;min-width:100%}
+.info-tbl th,.info-tbl td{border:1px solid var(--line);padding:8px 10px;font-size:12.5px;
+  text-align:left;vertical-align:middle;white-space:nowrap}
+.info-tbl th{background:#F4F3E4;font-weight:700;color:var(--ink-soft);text-align:center}
 .info-tbl td.c{text-align:center}
-.info-tbl td:first-child{font-weight:700}
-.info-tbl col.c-name{width:19%}
-.info-tbl col.c-role{width:14%}
-.info-tbl col.c-tel{width:24%}
-.info-tbl col.c-addr{width:24%}
-.info-tbl col.c-note{width:19%}
-.info-tbl col.c-act{width:13%}
-.info-tbl td.c a{word-break:break-all}
-.info-tbl .btn-sm{padding:3px 7px;font-size:11.5px}
-@media(max-width:400px){ .info-tbl th,.info-tbl td{font-size:11.5px;padding:6px 4px} }
+.info-tbl td:first-child,.info-tbl th:first-child{position:sticky;left:0;z-index:1;
+  background:var(--card);font-weight:700;box-shadow:1px 0 0 var(--line)}
+.info-tbl th:first-child{background:#F4F3E4;z-index:2}
+.info-tbl .btn-sm{padding:3px 9px;font-size:11.5px}
+@media(max-width:400px){ .info-tbl th,.info-tbl td{font-size:12px;padding:7px 8px} }
 </style>
 </head>
 <body>
@@ -291,7 +288,7 @@ body.auth .auth-only{display:inline-block}
     <div class="card" style="padding:10px">
       <div class="info-wrap"><table class="info-tbl" id="infoTbl"></table></div>
     </div>
-    <div style="font-size:12px;color:var(--ink-soft);padding:0 4px">본인 정보는 직접 수정할 수 있고, 직책 변경과 회원 등록·삭제는 운영진만 가능합니다.</div>
+    <div style="font-size:12px;color:var(--ink-soft);padding:0 4px">표를 좌우로 밀어 전체 항목을 볼 수 있습니다. 본인 정보는 직접 수정할 수 있고, 직책 변경과 회원 등록·삭제는 운영진만 가능합니다.</div>
   </section>
 </main>
 
@@ -572,9 +569,7 @@ function loadVisiblePhotos(){
 function renderInfo(){
   const mems = activeMembers();
   const act = !!AUTH;
-  let h = '<colgroup><col class="c-name"><col class="c-role"><col class="c-tel"><col class="c-addr"><col class="c-note">'+
-    (act?'<col class="c-act">':'')+'</colgroup>';
-  h += '<tr><th>이름</th><th>직책</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
+  let h = '<tr><th>이름</th><th>직책</th><th>연락처</th><th>주소</th><th>비고</th>'+(act?'<th></th>':'')+'</tr>';
   h += mems.length ? mems.map(m=>{
     const editable = isAdmin() || (AUTH && AUTH['이름']===m['이름']);
     return '<tr><td>'+esc(m['이름'])+'</td>'+
