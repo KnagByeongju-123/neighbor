@@ -39,6 +39,20 @@ header h1 small{font-size:12px;font-weight:600;color:var(--earth);margin-left:6p
 main{max-width:640px;margin:0 auto;padding:4px 16px 24px}
 .page{display:none}
 .page.on{display:block}
+/* 탭 전환 효과 — 아래 한 줄에서 pagerise(올라옴) / pagepop(확대) 중 골라 쓰면 됩니다 */
+.page.pop{animation:pagerise .36s cubic-bezier(.22,.9,.3,1) both}
+/* 살짝 올라오며 나타남 */
+@keyframes pagerise{
+  0%{transform:translateY(12px);opacity:0}
+  100%{transform:translateY(0);opacity:1}
+}
+/* 살짝 커졌다 제자리로 */
+@keyframes pagepop{
+  0%{transform:scale(.985);opacity:.55}
+  60%{transform:scale(1.008)}
+  100%{transform:scale(1);opacity:1}
+}
+@media(prefers-reduced-motion:reduce){.page.pop{animation:none}}
 h2{font-size:19px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px;
   color:var(--pg-ink);transition:color .35s ease}
 .page-head h2::before,#pg-home h2::before{content:'';display:inline-block;width:9px;height:9px;border-radius:3px;
@@ -604,6 +618,8 @@ function go(pg, btn){
   btn.classList.add('on');
   document.querySelector('.nav-wrap').dataset.pg = pg;
   document.body.dataset.pg = pg;
+  const pgEl = $('pg-'+pg);
+  pgEl.classList.remove('pop'); void pgEl.offsetWidth; pgEl.classList.add('pop');
   try{ btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); }catch(e){}
   window.scrollTo(0,0);
 }
