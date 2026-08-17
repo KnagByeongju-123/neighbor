@@ -39,14 +39,8 @@ header h1 small{font-size:12px;font-weight:600;color:var(--earth);margin-left:6p
 main{max-width:640px;margin:0 auto;padding:4px 16px 24px}
 .page{display:none}
 .page.on{display:block}
-/* 탭 전환 효과 — 아래 한 줄에서 pagerise(올라옴) / pagepop(확대) 중 골라 쓰면 됩니다 */
-.page.pop{animation:pagerise .36s cubic-bezier(.22,.9,.3,1) both}
-/* 살짝 올라오며 나타남 */
-@keyframes pagerise{
-  0%{transform:translateY(12px);opacity:0}
-  100%{transform:translateY(0);opacity:1}
-}
-/* 살짝 커졌다 제자리로 */
+/* 탭 전환 시 내용이 살짝 커졌다 제자리로 */
+.page.pop{animation:pagepop .34s cubic-bezier(.34,1.4,.64,1) both}
 @keyframes pagepop{
   0%{transform:scale(.985);opacity:.55}
   60%{transform:scale(1.008)}
