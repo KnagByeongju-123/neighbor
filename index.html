@@ -39,12 +39,23 @@ header h1 small{font-size:12px;font-weight:600;color:var(--earth);margin-left:6p
 main{max-width:640px;margin:0 auto;padding:4px 16px 24px}
 .page{display:none}
 .page.on{display:block}
-h2{font-size:19px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
+h2{font-size:19px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px;
+  color:var(--pg-ink);transition:color .35s ease}
+.page-head h2::before,#pg-home h2::before{content:'';display:inline-block;width:9px;height:9px;border-radius:3px;
+  background:var(--pg);margin-right:8px;vertical-align:2px;transition:background .35s ease}
 .page-head{display:flex;align-items:center;justify-content:space-between;margin:14px 0 10px}
 .page-head h2{margin:0}
 
 /* 카드/버튼 */
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+body{--pg:var(--accent);--pg-line:var(--line);--pg-ink:var(--ink)}
+body[data-pg="home"]{--pg:#8FB55C;--pg-line:#E2EAD0;--pg-ink:#557030}
+body[data-pg="fee"]{--pg:#D9B655;--pg-line:#EFE6C8;--pg-ink:#84651C}
+body[data-pg="event"]{--pg:#DE909B;--pg-line:#F2DCDF;--pg-ink:#8F4450}
+body[data-pg="board"]{--pg:#79AECC;--pg-line:#D9E7F0;--pg-ink:#39627E}
+body[data-pg="photo"]{--pg:#71C0A5;--pg-line:#D5EBE2;--pg-ink:#2E6853}
+body[data-pg="info"]{--pg:#9E86C9;--pg-line:#E5DDF1;--pg-ink:#57447E}
+.card{background:var(--card);border:1px solid var(--pg-line);border-radius:14px;padding:16px;margin-bottom:12px;
+  transition:border-color .35s ease}
 .btn{border:none;border-radius:10px;padding:9px 15px;font-size:15px;font-weight:700}
 .btn-primary{background:var(--accent);color:#fff}
 .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
@@ -53,7 +64,8 @@ h2{font-size:19px;font-weight:800;margin:14px 0 10px;letter-spacing:-.3px}
 
 /* 통계 3열 */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.stat{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:12px;padding:13px 10px;text-align:center}
+.stat{background:var(--card);border:1px solid var(--pg-line);border-top:3px solid var(--pg);border-radius:12px;padding:13px 10px;text-align:center;
+  transition:border-color .35s ease}
 .stat .label{font-size:12.5px;color:var(--ink-soft);font-weight:600;margin-bottom:4px;white-space:nowrap}
 .stat .value{font-size:19px;font-weight:800;letter-spacing:-.4px}
 .stat .value small{font-size:12px;font-weight:600;color:var(--ink-soft)}
@@ -300,7 +312,7 @@ body.auth .auth-only{display:inline-block}
 @media(max-width:400px){ .info-tbl th,.info-tbl td{font-size:12px;padding:7px 8px} }
 </style>
 </head>
-<body>
+<body data-pg="home">
 
 <div id="intro">
   <div class="hangwrap">
@@ -591,6 +603,7 @@ function go(pg, btn){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   document.querySelector('.nav-wrap').dataset.pg = pg;
+  document.body.dataset.pg = pg;
   try{ btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'}); }catch(e){}
   window.scrollTo(0,0);
 }
